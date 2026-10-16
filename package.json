@@ -1,0 +1,43 @@
+{
+  "name": "basalt-devtools",
+  "displayName": "Basalt DevTools",
+  "description": "Autocompletion, diagnostics and builds for Basalt plugins, on top of the Lua language server",
+  "version": "26.3.0",
+  "publisher": "basaltproject",
+  "license": "GPL-3.0-only",
+  "repository": { "type": "git", "url": "https://github.com/BasaltProject/DevTools.git" },
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Programming Languages", "Linters", "Snippets"],
+  "icon": "docs/assets/basalt-icon.png",
+  "main": "./extension.js",
+  "extensionDependencies": ["sumneko.lua"],
+  "activationEvents": ["workspaceContains:plugin.toml"],
+  "contributes": {
+    "commands": [
+      { "command": "basalt.check", "title": "Basalt: Check Plugin" },
+      { "command": "basalt.compile", "title": "Basalt: Compile Plugin" }
+    ],
+    "configuration": {
+      "title": "Basalt",
+      "properties": {
+        "basalt.target": {
+          "type": "string",
+          "enum": ["server", "proxy"],
+          "default": "server",
+          "description": "The product the plugin is for. It picks the API the editor completes and the checks Kiln runs."
+        },
+        "basalt.kilnPath": {
+          "type": "string",
+          "default": "kiln",
+          "description": "The Kiln executable."
+        },
+        "basalt.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run Kiln when a Lua file or plugin.toml is saved and show what it finds in the Problems panel."
+        }
+      }
+    },
+    "snippets": [{ "language": "lua", "path": "./snippets/basalt.code-snippets" }]
+  }
+}

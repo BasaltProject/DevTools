@@ -1,0 +1,12 @@
+{
+  "Basalt event handler": {
+    "prefix": "on",
+    "body": ["on(\"${1:player.join}\", function(event)", "\t$0", "end)"],
+    "description": "Listen to an event"
+  },
+  "Basalt command": {
+    "prefix": "cmd",
+    "body": ["cmd(\"${1:name}\", function(source, ...)", "\t$0", "end)"],
+    "description": "Register a command"
+  }
+}
