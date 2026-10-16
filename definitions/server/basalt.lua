@@ -83,6 +83,10 @@ function fill(...) end
 
 ---@param ... any
 ---@return any
+function form(...) end
+
+---@param ... any
+---@return any
 function later(...) end
 
 ---@param message string
