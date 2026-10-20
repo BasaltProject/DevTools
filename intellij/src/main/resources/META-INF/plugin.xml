@@ -1,0 +1,38 @@
+<idea-plugin>
+    <id>org.basaltmc.devtools</id>
+    <name>Basalt DevTools</name>
+    <vendor url="https://basaltmc.org">Basalt Project</vendor>
+    <description><![CDATA[
+        Editor support for Basalt plugins: runs Kiln to check and compile a plugin, lists what it finds in a tool
+        window, and puts the Basalt API definitions in the project so a Lua plugin completes them.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="org.basaltmc.devtools.intellij.BasaltSettings"/>
+        <applicationConfigurable parentId="tools" instance="org.basaltmc.devtools.intellij.BasaltConfigurable"
+                                 id="org.basaltmc.devtools.settings" displayName="Basalt"/>
+        <toolWindow id="Basalt" anchor="bottom" factoryClass="org.basaltmc.devtools.intellij.ProblemsToolWindowFactory"
+                    canCloseContents="false"/>
+        <postStartupActivity implementation="org.basaltmc.devtools.intellij.StartupCheck"/>
+        <notificationGroup id="Basalt" displayType="BALLOON"/>
+    </extensions>
+
+    <applicationListeners>
+        <listener class="org.basaltmc.devtools.intellij.SaveListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </applicationListeners>
+
+    <actions>
+        <group id="Basalt.Menu" text="Basalt" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="Basalt.Check" class="org.basaltmc.devtools.intellij.CheckAction" text="Check Plugin"
+                    description="Run Kiln over the plugin"/>
+            <action id="Basalt.Compile" class="org.basaltmc.devtools.intellij.CompileAction" text="Compile Plugin"
+                    description="Compile the plugin's Lua with Kiln"/>
+            <action id="Basalt.SyncApi" class="org.basaltmc.devtools.intellij.SyncApiAction" text="Sync API Definitions"
+                    description="Copy the Basalt API definitions into the project"/>
+        </group>
+    </actions>
+</idea-plugin>

@@ -29,7 +29,7 @@ Basalt Proxy, and builds on two other pieces instead of reimplementing them:
 DevTools is what connects them to Basalt: it gives LuaLS the API of the product you target, and shows Kiln's findings
 in the Problems panel.
 
-Only VS Code is supported for now.
+VS Code is the main editor. A JetBrains plugin (IntelliJ IDEA 2025.3 and newer) lives in [`intellij/`](intellij/).
 
 ## Features
 
@@ -83,6 +83,19 @@ vsce package
 ```
 
 This produces `basalt-devtools-<version>.vsix`, which VS Code installs from `Extensions: Install from VSIX`.
+
+## JetBrains
+
+`intellij/` holds the IDE plugin: `Tools | Basalt | Check Plugin` and `Compile Plugin` run Kiln, its findings appear in a
+Basalt tool window (double click opens the line), Kiln runs again when a Lua file or `plugin.toml` is saved, and
+`Sync API Definitions` copies the `---@meta` definitions of the target into `.basalt/api/` so a Lua plugin for the IDE
+completes them. The target, the Kiln path and the save check are under `Settings | Tools | Basalt`.
+
+```bash
+cd intellij && ./gradlew buildPlugin   # build/distributions/basalt-devtools-intellij-<version>.zip
+```
+
+Install the zip with `Settings | Plugins | Install Plugin from Disk`.
 
 ## License
 
