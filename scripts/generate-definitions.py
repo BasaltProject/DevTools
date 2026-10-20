@@ -25,7 +25,7 @@ def read(api: Path):
     return rows
 
 
-EVENT_STRING = {"world", "from_world", "to_world", "message", "command", "cause", "action", "block", "to_block", "item",
+EVENT_STRING = {"id", "payload", "world", "from_world", "to_world", "message", "command", "cause", "action", "block", "to_block", "item",
                 "main_item", "off_item", "hand", "entity_type", "gamemode", "from_gamemode", "kind", "direction",
                 "rule", "address", "motd", "source", "projectile", "reason", "effect", "cooker", "result",
                 "difficulty", "from_difficulty", "line1", "line2", "line3", "line4"}

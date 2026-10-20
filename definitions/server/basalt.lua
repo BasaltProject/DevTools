@@ -729,6 +729,17 @@ function _:cancel(message) end
 ---@field from_level integer
 local _ = {}
 
+---@class basalt.event.player_custom_click
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field id string
+---@field payload string
+local _ = {}
+
 ---@class basalt.event.player_sign_change
 ---@field name string
 ---@field cancelled boolean
@@ -1445,6 +1456,8 @@ function _:cancel(message) end
 ---@overload fun(event: "player.food_change", filter: table, handler: fun(e: basalt.event.player_food_change))
 ---@overload fun(event: "player.level_change", handler: fun(e: basalt.event.player_level_change))
 ---@overload fun(event: "player.level_change", filter: table, handler: fun(e: basalt.event.player_level_change))
+---@overload fun(event: "player.custom_click", handler: fun(e: basalt.event.player_custom_click))
+---@overload fun(event: "player.custom_click", filter: table, handler: fun(e: basalt.event.player_custom_click))
 ---@overload fun(event: "player.sign_change", handler: fun(e: basalt.event.player_sign_change))
 ---@overload fun(event: "player.sign_change", filter: table, handler: fun(e: basalt.event.player_sign_change))
 ---@overload fun(event: "player.bucket", handler: fun(e: basalt.event.player_bucket))
@@ -1590,6 +1603,8 @@ function on(event, handler) end
 ---@overload fun(event: "player.food_change", filter: table, handler: fun(e: basalt.event.player_food_change))
 ---@overload fun(event: "player.level_change", handler: fun(e: basalt.event.player_level_change))
 ---@overload fun(event: "player.level_change", filter: table, handler: fun(e: basalt.event.player_level_change))
+---@overload fun(event: "player.custom_click", handler: fun(e: basalt.event.player_custom_click))
+---@overload fun(event: "player.custom_click", filter: table, handler: fun(e: basalt.event.player_custom_click))
 ---@overload fun(event: "player.sign_change", handler: fun(e: basalt.event.player_sign_change))
 ---@overload fun(event: "player.sign_change", filter: table, handler: fun(e: basalt.event.player_sign_change))
 ---@overload fun(event: "player.bucket", handler: fun(e: basalt.event.player_bucket))
