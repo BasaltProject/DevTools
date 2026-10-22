@@ -204,7 +204,59 @@ function Hologram:remove() end
 ---@field thundering boolean
 ---@field difficulty string
 ---@field rules table<string, any>
+---@field dimension string
+---@field seed integer
+---@field min_height integer
+---@field height integer
+---@field day_time integer
 local World = {}
+
+---@param x integer
+---@param y integer
+---@param z integer
+---@return string?
+function World:biome(x, y, z) end
+
+---@param x integer
+---@param y integer
+---@param z integer
+---@param biome string
+---@return boolean
+function World:set_biome(x, y, z, biome) end
+
+---@param x integer
+---@param z integer
+---@param kind? "surface"|"ocean_floor"|"motion_blocking"
+---@return integer
+function World:highest(x, z, kind) end
+
+---@param chunk_x integer
+---@param chunk_z integer
+---@return boolean
+function World:chunk_loaded(chunk_x, chunk_z) end
+
+---@param chunk_x integer
+---@param chunk_z integer
+---@param generate? boolean
+---@return boolean
+function World:load_chunk(chunk_x, chunk_z, generate) end
+
+---@param chunk_x integer
+---@param chunk_z integer
+---@return boolean
+function World:unload_chunk(chunk_x, chunk_z) end
+
+---@param ticks integer
+function World:set_time(ticks) end
+
+---@param raining boolean
+---@param thundering? boolean
+function World:set_weather(raining, thundering) end
+
+---@param x integer
+---@param y integer
+---@param z integer
+function World:set_spawn(x, y, z) end
 
 ---@overload fun(self: basalt.World, x: integer, y: integer, z: integer): string
 ---@param where basalt.Where
