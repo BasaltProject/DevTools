@@ -367,13 +367,50 @@ function World:hold_chunks(token, chunks) end
 function World:release_chunks(token) end
 
 ---Runs what a change of blocks sets off for blocks that were already written. `effects` is a list of names (`neighbors`,
----`shapes`, `light`, `entities`, `poi`, `ticks`, `clients`; `entities`, `poi` and `ticks` are reserved) or their bits.
+---`shapes`, `light`, `entities`, `poi`, `ticks`, `clients`, `place`, `departure`) or their bits added up. `previous`
+---holds the state each position had before, which `departure` and `neighbors` use for what left.
 ---@param positions integer[][] { x, y, z } triples.
 ---@param effects? string[]|integer
+---@param previous? integer[] One state id per position, or nothing for unknown.
 ---@return integer reached How many positions were in a loaded chunk.
-function World:update_neighbors(positions, effects) end
+function World:update_neighbors(positions, effects, previous) end
 
----Writes states at positions, then runs `effects` for the blocks that changed.
+---Tells the block at each position that one of its neighbors changed (`neighborChanged`): lamps, torches, pistons, dust,
+---dispensers and rails answer, and what they change is told onward. `sources` holds the state that told it, if known.
+---@param positions integer[][] { x, y, z } triples.
+---@param sources? integer[] One state id per position, or nothing for unknown.
+---@return integer reached
+function World:neighbor_changed(positions, sources) end
+
+---Lets the blocks around each position reshape to fit it (`updateNeighbourShapes`), so fences join and torches fall off
+---a missing wall. With `states`, runs `updateIndirectNeighbourShapes` for a block that is, or was, that state instead.
+---@param positions integer[][] { x, y, z } triples.
+---@param states? integer[] One state id per position.
+---@return integer reached
+function World:update_shapes(positions, states) end
+
+---Books a tick of the block at a position, `delay` ticks away, or of the fluid in it when `kind` is `"fluid"`.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, delay: integer, kind?: "block"|"fluid"): boolean
+---@param where basalt.Where
+---@param delay integer
+---@param kind? "block"|"fluid"
+---@return boolean booked False when there is nothing to tick there.
+function World:schedule_tick(where, delay, kind) end
+
+---Uses an item on a face of the block at a position, as a player holding it and looking along `yaw` and `pitch` would.
+---Only block items are placed so far; returns how many blocks were put down.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, face: string, item: string, yaw?: number, pitch?: number): integer
+---@param where basalt.Where
+---@param face "down"|"up"|"north"|"south"|"west"|"east"
+---@param item string
+---@param yaw? number
+---@param pitch? number
+---@return integer placed
+function World:use_item_on(where, face, item, yaw, pitch) end
+
+---Writes states at positions, then runs `effects` for the blocks that changed, as `Level.setBlock` would: `departure`
+---and `place` (the old and the new block's own hooks), `ticks` (what the new block books), `neighbors`, `shapes`,
+---`clients`, `light`, `poi` (points of interest follow) and `entities` (a replaced container spills its items).
 ---@param positions integer[][] { x, y, z } triples.
 ---@param states integer[] One state id per position.
 ---@param effects? string[]|integer
@@ -397,9 +434,40 @@ function World:write_states(positions, states, notify) end
 ---@param chunks integer[][] Pairs of { chunk_x, chunk_z }.
 function World:resend_chunks(chunks) end
 
----Marks the light of the chunks stale so it is recomputed, and shows them again.
+---Works the light of the chunks out again off the tick thread, then shows them again to the players near them.
 ---@param chunks integer[][] Pairs of { chunk_x, chunk_z }.
 function World:relight_chunks(chunks) end
+
+---The light level at a position, 0 to 15, brought up to date first; nil when the chunk is not loaded.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, layer: "block"|"sky"): integer?
+---@param where basalt.Where
+---@param layer "block"|"sky"
+---@return integer?
+function World:light_at(where, layer) end
+
+---The light of a section as 2048 bytes, two levels each (index `y * 256 + z * 16 + x`, low nibble first); nil when
+---the chunk is not loaded or the dimension has no such light.
+---@param chunk_x integer
+---@param section_y integer
+---@param chunk_z integer
+---@param layer "block"|"sky"
+---@param load? boolean Load or generate the chunk (default true).
+---@return string?
+function World:light_section(chunk_x, section_y, chunk_z, layer, load) end
+
+---Replaces the light of a section with 2048 bytes in the layout `light_section` gives. It stands until blocks around
+---it change and the light is worked out again.
+---@param chunk_x integer
+---@param section_y integer
+---@param chunk_z integer
+---@param layer "block"|"sky"
+---@param bytes string
+---@return boolean
+function World:set_light_section(chunk_x, section_y, chunk_z, layer, bytes) end
+
+---Queues the light around blocks to be worked out again, as when a block there changed.
+---@param positions integer[][] { x, y, z } triples.
+function World:check_light(positions) end
 
 ---The chunks that are loaded, as { chunk_x, chunk_z } pairs.
 ---@return integer[][]
