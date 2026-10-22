@@ -487,6 +487,20 @@ function World:block_entity(where) end
 ---@return boolean
 function World:set_block_entity(where, snbt) end
 
+---Gives the block at a position a block entity holding SNBT (id, x, y and z are ignored), or the block's defaults when
+---the text is left out. Replaces the one there. False when the block owns none.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, snbt?: string): boolean
+---@param where basalt.Where
+---@param snbt? string
+---@return boolean
+function World:create_block_entity(where, snbt) end
+
+---Takes the block entity at a position away and leaves the block. False when there was none.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer): boolean
+---@param where basalt.Where
+---@return boolean
+function World:remove_block_entity(where) end
+
 ---Where the block entities of a loaded chunk are.
 ---@param chunk_x integer
 ---@param chunk_z integer
@@ -498,10 +512,17 @@ function World:block_entities(chunk_x, chunk_z) end
 ---@return string?
 function World:entity_nbt(entity) end
 
----Brings an entity back from the SNBT `entity_nbt` gave, with Pos changed as wanted.
+---Brings an entity back from the SNBT `entity_nbt` gave, with Pos changed as wanted. The `entity.spawn` event is asked
+---with `cause` (default `plugin`); a cancel gives nil.
 ---@param snbt string
+---@param cause? string
 ---@return basalt.Entity?
-function World:spawn_nbt(snbt) end
+function World:spawn_nbt(snbt, cause) end
+
+---Takes the entity with this uuid out of the world.
+---@param uuid string
+---@return boolean removed False when no live entity has that uuid.
+function World:remove_entity(uuid) end
 
 ---An entity of this world by id or uuid.
 ---@param id integer|string
@@ -743,6 +764,30 @@ function worlds.block_hardness(block) end
 ---@param id integer
 ---@return { friction: number, speed_factor: number, jump_factor: number, push_reaction: string, map_color: integer, ignite_odds: number, burn_odds: number }?
 function worlds.block_info(id) end
+
+---Which blocks own a block entity: block id to the id of its block entity type.
+---@return table<string, string>
+function worlds.block_entity_types() end
+
+---The world data version this server writes, the number saved data is upgraded to.
+---@return integer
+function worlds.data_version() end
+
+---Upgrades a `chunk`, `block_entity`, `entity` or `item` written at `from_version` to the current data version. Returns
+---SNBT, or nil for another kind.
+---@param kind "chunk"|"block_entity"|"entity"|"item"
+---@param snbt string
+---@param from_version integer
+---@return string?
+function worlds.fix_nbt(kind, snbt, from_version) end
+
+---Upgrades a `block_state` such as `minecraft:oak_stairs[facing=east]`, an `item` id or a `biome` id written at
+---`from_version`. Returns nil for another kind.
+---@param kind "block_state"|"item"|"biome"
+---@param text string
+---@param from_version integer
+---@return string?
+function worlds.fix_name(kind, text, from_version) end
 
 ---The item ids, in registry order.
 ---@return string[]
