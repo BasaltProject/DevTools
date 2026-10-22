@@ -446,14 +446,16 @@ function World:relight_chunks(chunks) end
 function World:light_at(where, layer) end
 
 ---The light of a section as 2048 bytes, two levels each (index `y * 256 + z * 16 + x`, low nibble first); nil when
----the chunk is not loaded or the dimension has no such light.
+---the chunk is not loaded or lit yet, or the dimension has no such light.
 ---@param chunk_x integer
 ---@param section_y integer
 ---@param chunk_z integer
 ---@param layer "block"|"sky"
 ---@param load? boolean Load or generate the chunk (default true).
+---@param fresh? boolean Work the light out first when blocks around changed (default true); `false` gives what the
+---server has worked out so far.
 ---@return string?
-function World:light_section(chunk_x, section_y, chunk_z, layer, load) end
+function World:light_section(chunk_x, section_y, chunk_z, layer, load, fresh) end
 
 ---Replaces the light of a section with 2048 bytes in the layout `light_section` gives. It stands until blocks around
 ---it change and the light is worked out again.
