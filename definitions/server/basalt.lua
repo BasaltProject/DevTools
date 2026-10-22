@@ -789,6 +789,11 @@ function worlds.items() end
 ---@return string[]
 function worlds.entity_types() end
 
+---The ids of a registry by name, such as `damage_type`, `particle_type` or `worldgen/biome`. Empty when the server has none.
+---@param registry string
+---@return string[]
+function worlds.registry(registry) end
+
 ---The tags of `blocks`, `items`, `fluids` or `entity_types`: tag id to its member ids.
 ---@param registry string
 ---@return table<string, string[]>
