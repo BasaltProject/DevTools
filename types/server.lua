@@ -343,6 +343,56 @@ function World:apply_chunk(chunk_x, chunk_z, sections, options) end
 ---@return table<integer, table<integer, integer[]>>? previous One entry per chunk, in order, each mapping section_y to the old states.
 function World:apply_chunks(chunks, options) end
 
+---Every section of a chunk at once, keyed by section y, each a list of 4096 state ids as in `World:section`.
+---@param chunk_x integer
+---@param chunk_z integer
+---@param load? boolean Load or generate the chunk when it is not there (default true).
+---@return table<integer, integer[]>? sections Nil when the chunk is not loaded and load is false.
+function World:chunk_sections(chunk_x, chunk_z, load) end
+
+---Where a chunk stands: `unloaded`, `queued` (asked for and on its way), `loaded` or `ticking` (loaded near a player).
+---@param chunk_x integer
+---@param chunk_z integer
+---@return "unloaded"|"queued"|"loaded"|"ticking"
+function World:chunk_status(chunk_x, chunk_z) end
+
+---Keeps chunks loaded for a holder until `release_chunks` is called with the same token.
+---@param token string
+---@param chunks integer[][] Pairs of { chunk_x, chunk_z }.
+---@return boolean
+function World:hold_chunks(token, chunks) end
+
+---Lets go of everything a token held.
+---@param token string
+function World:release_chunks(token) end
+
+---Runs what a change of blocks sets off for blocks that were already written. `effects` is a list of names (`neighbors`,
+---`shapes`, `light`, `entities`, `poi`, `ticks`, `clients`; `entities`, `poi` and `ticks` are reserved) or their bits.
+---@param positions integer[][] { x, y, z } triples.
+---@param effects? string[]|integer
+---@return integer reached How many positions were in a loaded chunk.
+function World:update_neighbors(positions, effects) end
+
+---Writes states at positions, then runs `effects` for the blocks that changed.
+---@param positions integer[][] { x, y, z } triples.
+---@param states integer[] One state id per position.
+---@param effects? string[]|integer
+---@return integer changed
+function World:apply_changes(positions, states, effects) end
+
+---The state ids at positions, -1 where the chunk is not loaded and `load` is false.
+---@param positions integer[][] { x, y, z } triples.
+---@param load? boolean Load or generate the chunks (default true).
+---@return integer[]
+function World:read_states(positions, load) end
+
+---Writes states at positions. Returns how many blocks changed.
+---@param positions integer[][] { x, y, z } triples.
+---@param states integer[] One state id per position.
+---@param notify? boolean Show the change to the players who see it (default true).
+---@return integer changed
+function World:write_states(positions, states, notify) end
+
 ---Sends the chunks again to every player near them.
 ---@param chunks integer[][] Pairs of { chunk_x, chunk_z }.
 function World:resend_chunks(chunks) end
@@ -472,6 +522,14 @@ function wait(ticks) end
 ---@param where basalt.Where
 function at(where) end
 
+---Waits until a chunk is loaded, generating it in the background when `generate` is not false. A lower priority is
+---served first; `urgent` is the priority of a player waiting for the chunk. Check `World:chunk_status` afterwards.
+---@param world string
+---@param chunk_x integer
+---@param chunk_z integer
+---@param options? { generate?: boolean, urgent?: boolean }
+function request_chunk(world, chunk_x, chunk_z, options) end
+
 ---@param ticks integer
 ---@param fn fun()
 ---@return basalt.Handle
@@ -590,6 +648,45 @@ function worlds.state_text(id) end
 ---The biome names, in registry order.
 ---@return string[]
 function worlds.biomes() end
+
+---Every block with the id of its first state and how many states it has.
+---@return { name: string, first_state: integer, state_count: integer }[]
+function worlds.blocks() end
+
+---The properties of a block in the order their values step the state id, each with the values it can take.
+---@param block string
+---@return { name: string, values: string[] }[]
+function worlds.block_properties(block) end
+
+---Facts about a state: `blocks_motion`, `occludes`, `full_cube`, `replaceable`, `has_fluid`, `has_collision`,
+---`conducts_redstone`, `ticks_randomly`, `air`, `has_block_entity`, then `light_emission` and `light_opacity`.
+---@param id integer
+---@return table<string, boolean|integer>
+function worlds.state_flags(id) end
+
+---Destroy time, explosion resistance and whether the right tool is needed; nil for an unknown block.
+---@param block string
+---@return { destroy_time: number, explosion_resistance: number, needs_tool: boolean }?
+function worlds.block_hardness(block) end
+
+---Physical facts about a state: friction, speed and jump factors, how a piston treats it (`normal`, `destroy`, `block`,
+---`ignore`, `push_only`), its map colour as 0xRRGGBB, and the odds it catches fire and burns.
+---@param id integer
+---@return { friction: number, speed_factor: number, jump_factor: number, push_reaction: string, map_color: integer, ignite_odds: number, burn_odds: number }?
+function worlds.block_info(id) end
+
+---The item ids, in registry order.
+---@return string[]
+function worlds.items() end
+
+---The entity type ids.
+---@return string[]
+function worlds.entity_types() end
+
+---The tags of `blocks`, `items`, `fluids` or `entity_types`: tag id to its member ids.
+---@param registry string
+---@return table<string, string[]>
+function worlds.tags(registry) end
 
 ---@class basalt.log
 log = {}
