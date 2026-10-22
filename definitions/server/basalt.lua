@@ -76,7 +76,16 @@ function Inventory:clear() end
 ---@field z number
 ---@field health number
 ---@field alive boolean
+---@field uuid string
+---@field yaw number
+---@field pitch number
+---@field on_ground boolean
+---@field age integer Ticks lived.
+---@field width number
+---@field height number
+---@field custom_name string?
 ---@field pos basalt.Position
+---@field velocity { x: number, y: number, z: number }
 local Entity = {}
 
 function Entity:remove() end
@@ -209,8 +218,11 @@ function Hologram:remove() end
 ---@field min_height integer
 ---@field height integer
 ---@field day_time integer
+---@field block_version integer Moves on whenever a block changes or a chunk loads or unloads, so a copy of a section stays valid while it holds.
+---@field folder string The world folder on disk, under worlds/.
 local World = {}
 
+---The biome id at a block, such as `minecraft:plains`.
 ---@param x integer
 ---@param y integer
 ---@param z integer
@@ -224,6 +236,7 @@ function World:biome(x, y, z) end
 ---@return boolean
 function World:set_biome(x, y, z, biome) end
 
+---The highest y whose block counts for the kind, or one below the world when there is none.
 ---@param x integer
 ---@param z integer
 ---@param kind? "surface"|"ocean_floor"|"motion_blocking"
@@ -235,17 +248,20 @@ function World:highest(x, z, kind) end
 ---@return boolean
 function World:chunk_loaded(chunk_x, chunk_z) end
 
+---Loads or generates the chunk, and returns whether it is there afterwards.
 ---@param chunk_x integer
 ---@param chunk_z integer
 ---@param generate? boolean
 ---@return boolean
 function World:load_chunk(chunk_x, chunk_z, generate) end
 
+---Saves and drops a chunk nobody is using; false when a player still sees it.
 ---@param chunk_x integer
 ---@param chunk_z integer
 ---@return boolean
 function World:unload_chunk(chunk_x, chunk_z) end
 
+---The time of day, 0 to 23999.
 ---@param ticks integer
 function World:set_time(ticks) end
 
@@ -294,6 +310,104 @@ function World:hologram(text, where) end
 ---@param options table
 ---@return basalt.NPC?
 function World:npc(options) end
+
+---Block state ids of a 16 by 16 by 16 section, 4096 of them ordered x fastest, then z, then y (index = y * 256 + z * 16 + x, from 1).
+---@param chunk_x integer
+---@param section_y integer
+---@param chunk_z integer
+---@param load? boolean Load or generate the chunk when it is not there (default true).
+---@return integer[]? states Nil when the chunk is not loaded and load is false.
+function World:section(chunk_x, section_y, chunk_z, load) end
+
+---Writes a whole section; a negative id keeps the block. Returns false when the chunk or section is out of range.
+---@param chunk_x integer
+---@param section_y integer
+---@param chunk_z integer
+---@param states integer[] 4096 state ids.
+---@param notify? boolean Show the change to the players who see it (default true).
+---@return boolean
+function World:set_section(chunk_x, section_y, chunk_z, states, notify) end
+
+---Writes several sections of one chunk. Returns the number of blocks that changed (nil when something was out of range), and with `previous = true` a second result mapping section_y to what that section held before.
+---@param chunk_x integer
+---@param chunk_z integer
+---@param sections table<integer, integer[]> section_y to 4096 state ids; a negative id keeps the block.
+---@param options? { resend?: boolean, previous?: boolean }
+---@return integer? changed
+---@return table<integer, integer[]>? previous
+function World:apply_chunk(chunk_x, chunk_z, sections, options) end
+
+---Writes many chunks in one go. Few changes reach the players as block changes, many as the chunk again.
+---@param chunks { x: integer, z: integer, sections: table<integer, integer[]> }[]
+---@param options? { resend?: boolean, previous?: boolean }
+---@return integer? changed Nil when something was out of range (everything else is still applied).
+---@return table<integer, table<integer, integer[]>>? previous One entry per chunk, in order, each mapping section_y to the old states.
+function World:apply_chunks(chunks, options) end
+
+---Sends the chunks again to every player near them.
+---@param chunks integer[][] Pairs of { chunk_x, chunk_z }.
+function World:resend_chunks(chunks) end
+
+---Marks the light of the chunks stale so it is recomputed, and shows them again.
+---@param chunks integer[][] Pairs of { chunk_x, chunk_z }.
+function World:relight_chunks(chunks) end
+
+---The chunks that are loaded, as { chunk_x, chunk_z } pairs.
+---@return integer[][]
+function World:loaded_chunks() end
+
+---A block entity (chest, sign, banner...) as SNBT with id, x, y and z included; nil when the position holds none.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer): string?
+---@param where basalt.Where
+---@return string?
+function World:block_entity(where) end
+
+---Replaces the data of the block entity at a position with SNBT (id, x, y and z are ignored). False when the block owns none.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, snbt: string): boolean
+---@param where basalt.Where
+---@param snbt string
+---@return boolean
+function World:set_block_entity(where, snbt) end
+
+---Where the block entities of a loaded chunk are.
+---@param chunk_x integer
+---@param chunk_z integer
+---@return integer[][] positions { x, y, z } triples in world coordinates.
+function World:block_entities(chunk_x, chunk_z) end
+
+---An entity as the SNBT the world would save it as (id, Pos, Rotation, Motion, UUID...).
+---@param entity basalt.Entity|integer An entity or its id.
+---@return string?
+function World:entity_nbt(entity) end
+
+---Brings an entity back from the SNBT `entity_nbt` gave, with Pos changed as wanted.
+---@param snbt string
+---@return basalt.Entity?
+function World:spawn_nbt(snbt) end
+
+---An entity of this world by id or uuid.
+---@param id integer|string
+---@return basalt.Entity?
+function World:entity(id) end
+
+---The entities of a chunk, which are the ones it will save.
+---@param chunk_x integer
+---@param chunk_z integer
+---@return basalt.Entity[]
+function World:entities_in(chunk_x, chunk_z) end
+
+---The biome names of a chunk's 4 by 4 by 4 cells for the whole height of the world (height / 4 * 16 of them), ordered (cell_y * 4 + cell_z) * 4 + cell_x from 1, cell_y counting up from the lowest block. Nil when the chunk is not loaded.
+---@param chunk_x integer
+---@param chunk_z integer
+---@return string[]?
+function World:biomes(chunk_x, chunk_z) end
+
+---Writes biomes in the same order and shows the chunk again; a cell that is not a string keeps its biome.
+---@param chunk_x integer
+---@param chunk_z integer
+---@param biomes (string|false)[]
+---@return boolean
+function World:set_biomes(chunk_x, chunk_z, biomes) end
 
 ---@return basalt.Entity[]
 function World:entities(...) end
@@ -464,6 +578,20 @@ function worlds.by_name(name) end
 ---@return basalt.World
 function worlds.default() end
 
+---A block state as `minecraft:oak_stairs[facing=east]` to its id, or -1.
+---@param text string
+---@return integer
+function worlds.state_id(text) end
+
+---The reverse of `worlds.state_id`; empty for an id that is not a state.
+---@param id integer
+---@return string
+function worlds.state_text(id) end
+
+---The biome names, in registry order.
+---@return string[]
+function worlds.biomes() end
+
 ---@class basalt.log
 log = {}
 
@@ -506,6 +634,89 @@ function files.list(path) end
 ---@param text string
 ---@return boolean
 function files.write(path, text) end
+
+---@class basalt.Packet
+---@field name string The vanilla name, such as `clientbound.set_title_text`.
+---@field serverbound boolean
+---@field phase "handshake"|"status"|"login"|"configuration"|"play"
+---@field id integer
+---@field connection integer
+---@field protocol integer The protocol version the client announced; 0 before the handshake.
+---@field translated boolean True when the client is older than the server and the bytes are in the server's shape.
+---@field size integer
+---@field player_name string
+---@field player_uuid string
+---@field player basalt.Player?
+---@field cancelled boolean Setting it to true cancels the packet (not on `packet.watch`).
+---@field bytes integer[] The body without the id; assigning a list replaces it.
+local Packet = {}
+
+function Packet:cancel() end
+
+---Sends another clientbound packet on the connection this one travels on, past the listeners unless asked.
+---@param name string
+---@param bytes integer[]
+---@param intercept? boolean
+---@return boolean
+function Packet:send(name, bytes, intercept) end
+
+---Hands a serverbound packet to the server as if the client had sent it.
+---@param name string
+---@param bytes integer[]
+---@param intercept? boolean
+---@return boolean
+function Packet:receive(name, bytes, intercept) end
+
+---Needs `packets = true` under `[capabilities]` in plugin.toml and the permission to be granted.
+---@class basalt.packet
+packet = {}
+
+---Listens to packets of any state. A name is `clientbound.set_title_text`, `serverbound.play.*` or `clientbound.configuration.0x07`.
+---@param name string
+---@param options { priority?: "first"|"early"|"normal"|"late"|"last" }|fun(p: basalt.Packet)
+---@param handler? fun(p: basalt.Packet)
+function packet.on(name, options, handler) end
+
+---Like `packet.on`, but it only observes: it cannot cancel or edit.
+---@param name string
+---@param options { priority?: "first"|"early"|"normal"|"late"|"last" }|fun(p: basalt.Packet)
+---@param handler? fun(p: basalt.Packet)
+function packet.watch(name, options, handler) end
+
+---Sends a clientbound packet to a player.
+---@param player basalt.Player|string
+---@param name string
+---@param bytes integer[]
+---@param intercept? boolean Run the listeners on it (default false).
+---@return boolean
+function packet.send(player, name, bytes, intercept) end
+
+---Handles a serverbound packet as if that player's client had sent it.
+---@param player basalt.Player|string
+---@param name string
+---@param bytes integer[]
+---@param intercept? boolean
+---@return boolean
+function packet.receive(player, name, bytes, intercept) end
+
+---Plugin message channels; the plugin declares them in `network` under `[capabilities]`.
+---@class basalt.channel
+channel = {}
+
+---@param name string
+---@param fn fun(player: basalt.Player, bytes: integer[])
+function channel.on(name, fn) end
+
+---@param player basalt.Player|string
+---@param name string
+---@param bytes integer[]
+---@return boolean
+function channel.send(player, name, bytes) end
+
+---Runs a command as the console. Needs `commands = true` under `[capabilities]`.
+---@param command string
+---@return boolean
+function run(command) end
 
 ---@class basalt.event.player_join
 ---@field name string
