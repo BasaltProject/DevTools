@@ -217,7 +217,7 @@ function Hologram:remove() end
 ---@field min_height integer
 ---@field height integer
 ---@field day_time integer
----@field block_version integer Moves on whenever a block changes or a chunk loads or unloads, so a copy of a section stays valid while it holds.
+---@field block_version integer Moves when a block changes or a chunk loads or unloads.
 ---@field folder string The world folder on disk, under worlds/.
 local World = {}
 
@@ -310,7 +310,7 @@ function World:hologram(text, where) end
 ---@return basalt.NPC?
 function World:npc(options) end
 
----Block state ids of a 16 by 16 by 16 section, 4096 of them ordered x fastest, then z, then y (index = y * 256 + z * 16 + x, from 1).
+---Block state ids of a section, 4096 of them, index = y * 256 + z * 16 + x, from 1.
 ---@param chunk_x integer
 ---@param section_y integer
 ---@param chunk_z integer
@@ -327,7 +327,7 @@ function World:section(chunk_x, section_y, chunk_z, load) end
 ---@return boolean
 function World:set_section(chunk_x, section_y, chunk_z, states, notify) end
 
----Writes several sections of one chunk. Returns the number of blocks that changed (nil when something was out of range), and with `previous = true` a second result mapping section_y to what that section held before.
+---Writes several sections of one chunk; returns the blocks changed, and with `previous` the old states.
 ---@param chunk_x integer
 ---@param chunk_z integer
 ---@param sections table<integer, integer[]> section_y to 4096 state ids; a negative id keeps the block.
@@ -340,7 +340,7 @@ function World:apply_chunk(chunk_x, chunk_z, sections, options) end
 ---@param chunks { x: integer, z: integer, sections: table<integer, integer[]> }[]
 ---@param options? { resend?: boolean, previous?: boolean }
 ---@return integer? changed Nil when something was out of range (everything else is still applied).
----@return table<integer, table<integer, integer[]>>? previous One entry per chunk, in order, each mapping section_y to the old states.
+---@return table<integer, table<integer, integer[]>>? previous Per chunk, section_y to the old states.
 function World:apply_chunks(chunks, options) end
 
 ---Every section of a chunk at once, keyed by section y, each a list of 4096 state ids as in `World:section`.
@@ -366,28 +366,31 @@ function World:hold_chunks(token, chunks) end
 ---@param token string
 function World:release_chunks(token) end
 
----Runs what a change of blocks sets off for blocks that were already written. `effects` is a list of names (`neighbors`,
----`shapes`, `light`, `entities`, `poi`, `ticks`, `clients`, `place`, `departure`) or their bits added up. `previous`
----holds the state each position had before, which `departure` and `neighbors` use for what left.
+---Runs the effects of a block change on blocks already written; `effects` is a list of names or their bits added up.
 ---@param positions integer[][] { x, y, z } triples.
 ---@param effects? string[]|integer
 ---@param previous? integer[] One state id per position, or nothing for unknown.
 ---@return integer reached How many positions were in a loaded chunk.
 function World:update_neighbors(positions, effects, previous) end
 
----Tells the block at each position that one of its neighbors changed (`neighborChanged`): lamps, torches, pistons, dust,
----dispensers and rails answer, and what they change is told onward. `sources` holds the state that told it, if known.
+---Tells the block at each position that a neighbor changed (`neighborChanged`); `sources` is the state that told it.
 ---@param positions integer[][] { x, y, z } triples.
 ---@param sources? integer[] One state id per position, or nothing for unknown.
 ---@return integer reached
 function World:neighbor_changed(positions, sources) end
 
----Lets the blocks around each position reshape to fit it (`updateNeighbourShapes`), so fences join and torches fall off
----a missing wall. With `states`, runs `updateIndirectNeighbourShapes` for a block that is, or was, that state instead.
+---Lets the blocks around each position reshape to fit it (`updateNeighbourShapes`); `states` runs the indirect variant.
 ---@param positions integer[][] { x, y, z } triples.
 ---@param states? integer[] One state id per position.
 ---@return integer reached
 function World:update_shapes(positions, states) end
+
+---What a block state would settle to at a position against its neighbours; nothing is written.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, state: integer): integer
+---@param where basalt.Where
+---@param state integer
+---@return integer state
+function World:valid_state(where, state) end
 
 ---Books a tick of the block at a position, `delay` ticks away, or of the fluid in it when `kind` is `"fluid"`.
 ---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, delay: integer, kind?: "block"|"fluid"): boolean
@@ -397,8 +400,7 @@ function World:update_shapes(positions, states) end
 ---@return boolean booked False when there is nothing to tick there.
 function World:schedule_tick(where, delay, kind) end
 
----Uses an item on a face of the block at a position, as a player holding it and looking along `yaw` and `pitch` would.
----Only block items are placed so far; returns how many blocks were put down.
+---Uses an item on a face of the block at a position as a player would; only block items so far, returns blocks placed.
 ---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, face: string, item: string, yaw?: number, pitch?: number): integer
 ---@param where basalt.Where
 ---@param face "down"|"up"|"north"|"south"|"west"|"east"
@@ -408,9 +410,7 @@ function World:schedule_tick(where, delay, kind) end
 ---@return integer placed
 function World:use_item_on(where, face, item, yaw, pitch) end
 
----Writes states at positions, then runs `effects` for the blocks that changed, as `Level.setBlock` would: `departure`
----and `place` (the old and the new block's own hooks), `ticks` (what the new block books), `neighbors`, `shapes`,
----`clients`, `light`, `poi` (points of interest follow) and `entities` (a replaced container spills its items).
+---Writes states at positions, then runs `effects` for the blocks that changed, as `Level.setBlock` would.
 ---@param positions integer[][] { x, y, z } triples.
 ---@param states integer[] One state id per position.
 ---@param effects? string[]|integer
@@ -445,20 +445,17 @@ function World:relight_chunks(chunks) end
 ---@return integer?
 function World:light_at(where, layer) end
 
----The light of a section as 2048 bytes, two levels each (index `y * 256 + z * 16 + x`, low nibble first); nil when
----the chunk is not loaded or lit yet, or the dimension has no such light.
+---The light of a section as 2048 bytes, two levels each, low nibble first; nil when not loaded or lit.
 ---@param chunk_x integer
 ---@param section_y integer
 ---@param chunk_z integer
 ---@param layer "block"|"sky"
 ---@param load? boolean Load or generate the chunk (default true).
----@param fresh? boolean Work the light out first when blocks around changed (default true); `false` gives what the
----server has worked out so far.
+---@param fresh? boolean Work the light out first when blocks around changed (default true).
 ---@return string?
 function World:light_section(chunk_x, section_y, chunk_z, layer, load, fresh) end
 
----Replaces the light of a section with 2048 bytes in the layout `light_section` gives. It stands until blocks around
----it change and the light is worked out again.
+---Replaces the light of a section with 2048 bytes in the layout `light_section` gives.
 ---@param chunk_x integer
 ---@param section_y integer
 ---@param chunk_z integer
@@ -481,15 +478,14 @@ function World:loaded_chunks() end
 ---@return string?
 function World:block_entity(where) end
 
----Replaces the data of the block entity at a position with SNBT (id, x, y and z are ignored). False when the block owns none.
+---Replaces the data of the block entity at a position with SNBT; false when the block owns none.
 ---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, snbt: string): boolean
 ---@param where basalt.Where
 ---@param snbt string
 ---@return boolean
 function World:set_block_entity(where, snbt) end
 
----Gives the block at a position a block entity holding SNBT (id, x, y and z are ignored), or the block's defaults when
----the text is left out. Replaces the one there. False when the block owns none.
+---Gives the block at a position a block entity from SNBT or its defaults; false when the block owns none.
 ---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, snbt?: string): boolean
 ---@param where basalt.Where
 ---@param snbt? string
@@ -513,8 +509,7 @@ function World:block_entities(chunk_x, chunk_z) end
 ---@return string?
 function World:entity_nbt(entity) end
 
----Brings an entity back from the SNBT `entity_nbt` gave, with Pos changed as wanted. The `entity.spawn` event is asked
----with `cause` (default `plugin`); a cancel gives nil.
+---Brings an entity back from the SNBT `entity_nbt` gave; `entity.spawn` is asked with `cause` (default `plugin`).
 ---@param snbt string
 ---@param cause? string
 ---@return basalt.Entity?
@@ -536,7 +531,7 @@ function World:entity(id) end
 ---@return basalt.Entity[]
 function World:entities_in(chunk_x, chunk_z) end
 
----The biome names of a chunk's 4 by 4 by 4 cells for the whole height of the world (height / 4 * 16 of them), ordered (cell_y * 4 + cell_z) * 4 + cell_x from 1, cell_y counting up from the lowest block. Nil when the chunk is not loaded.
+---The biome names of a chunk's 4 by 4 by 4 cells, index (cell_y * 4 + cell_z) * 4 + cell_x from 1; nil when not loaded.
 ---@param chunk_x integer
 ---@param chunk_z integer
 ---@return string[]?
@@ -613,8 +608,7 @@ function wait(ticks) end
 ---@param where basalt.Where
 function at(where) end
 
----Waits until a chunk is loaded, generating it in the background when `generate` is not false. A lower priority is
----served first; `urgent` is the priority of a player waiting for the chunk. Check `World:chunk_status` afterwards.
+---Waits until a chunk is loaded, generating it in the background unless `generate` is false; `urgent` jumps the queue.
 ---@param world string
 ---@param chunk_x integer
 ---@param chunk_z integer
@@ -749,8 +743,7 @@ function worlds.blocks() end
 ---@return { name: string, values: string[] }[]
 function worlds.block_properties(block) end
 
----Facts about a state: `blocks_motion`, `occludes`, `full_cube`, `replaceable`, `has_fluid`, `has_collision`,
----`conducts_redstone`, `ticks_randomly`, `air`, `has_block_entity`, then `light_emission` and `light_opacity`.
+---Boolean facts about a state (`blocks_motion`, `occludes`, `air`...) plus `light_emission` and `light_opacity`.
 ---@param id integer
 ---@return table<string, boolean|integer>
 function worlds.state_flags(id) end
@@ -760,8 +753,7 @@ function worlds.state_flags(id) end
 ---@return { destroy_time: number, explosion_resistance: number, needs_tool: boolean }?
 function worlds.block_hardness(block) end
 
----Physical facts about a state: friction, speed and jump factors, how a piston treats it (`normal`, `destroy`, `block`,
----`ignore`, `push_only`), its map colour as 0xRRGGBB, and the odds it catches fire and burns.
+---Physical facts about a state: friction, speed and jump factors, piston reaction, map colour and fire odds.
 ---@param id integer
 ---@return { friction: number, speed_factor: number, jump_factor: number, push_reaction: string, map_color: integer, ignite_odds: number, burn_odds: number }?
 function worlds.block_info(id) end
@@ -774,16 +766,14 @@ function worlds.block_entity_types() end
 ---@return integer
 function worlds.data_version() end
 
----Upgrades a `chunk`, `block_entity`, `entity` or `item` written at `from_version` to the current data version. Returns
----SNBT, or nil for another kind.
+---Upgrades a `chunk`, `block_entity`, `entity` or `item` from `from_version` to the current data version; SNBT or nil.
 ---@param kind "chunk"|"block_entity"|"entity"|"item"
 ---@param snbt string
 ---@param from_version integer
 ---@return string?
 function worlds.fix_nbt(kind, snbt, from_version) end
 
----Upgrades a `block_state` such as `minecraft:oak_stairs[facing=east]`, an `item` id or a `biome` id written at
----`from_version`. Returns nil for another kind.
+---Upgrades a `block_state`, `item` id or `biome` id written at `from_version`; nil for another kind.
 ---@param kind "block_state"|"item"|"biome"
 ---@param text string
 ---@param from_version integer
@@ -864,7 +854,7 @@ local Packet = {}
 
 function Packet:cancel() end
 
----Sends another clientbound packet on the connection this one travels on, past the listeners unless asked.
+---Sends another clientbound packet on this connection, past the listeners unless asked.
 ---@param name string
 ---@param bytes integer[]
 ---@param intercept? boolean
@@ -882,7 +872,7 @@ function Packet:receive(name, bytes, intercept) end
 ---@class basalt.packet
 packet = {}
 
----Listens to packets of any state. A name is `clientbound.set_title_text`, `serverbound.play.*` or `clientbound.configuration.0x07`.
+---Listens to packets of any state; a name is `clientbound.set_title_text`, `serverbound.play.*` or similar.
 ---@param name string
 ---@param options { priority?: "first"|"early"|"normal"|"late"|"last" }|fun(p: basalt.Packet)
 ---@param handler? fun(p: basalt.Packet)
