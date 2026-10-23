@@ -4,7 +4,7 @@
 
 ---@alias basalt.Where basalt.Position|{ world?: string, x: number, y: number, z: number }
 
----@alias basalt.ItemSpec string|{ id: string, count?: integer, name?: string, lore?: string[], damage?: integer, enchantments?: table<string, integer> }
+---@alias basalt.ItemSpec string|{ id: string, count?: integer, name?: string, lore?: string[], damage?: integer, enchantments?: table<string, integer>, components?: table<string, string> }
 
 ---A task that can be cancelled.
 ---@class basalt.Handle
@@ -36,6 +36,7 @@ function Position:distance(other) end
 ---@field lore string[]
 ---@field damage integer
 ---@field enchantments table<string, integer>
+---@field components table<string, string> Data components by name, values as SNBT text.
 
 ---@class basalt.Inventory
 ---@field size integer
@@ -86,6 +87,59 @@ function Inventory:clear() end
 ---@field custom_name string?
 ---@field pos basalt.Position
 ---@field velocity { x: number, y: number, z: number }
+---@field max_health number The max health attribute base value.
+---@field absorption number Absorption hearts.
+---@field fire_ticks integer Ticks left on fire.
+---@field frozen_ticks integer `TicksFrozen`.
+---@field air integer Air supply ticks.
+---@field max_air integer 300, or 4800 for dolphins. Read only.
+---@field fall_distance number
+---@field no_gravity boolean
+---@field invulnerable boolean Ignores damage that does not bypass invulnerability.
+---@field glowing boolean
+---@field silent boolean
+---@field invisible boolean
+---@field custom_name_visible boolean
+---@field persistent boolean Never despawns.
+---@field ticks_lived integer
+---@field tags string[] Scoreboard tags; assigning a table replaces them all.
+---@field vehicle integer Id of what it rides, -1 for none. Read only.
+---@field passengers string[] Ids of the riders. Read only.
+---@field no_ai boolean Goals off.
+---@field can_pick_up_loot boolean
+---@field target integer Id of the attack target, -1 for none.
+---@field last_damage number
+---@field last_damage_cause string Damage type of the last hit. Read only.
+---@field last_hurt_by_player string? Uuid of the player that hurt it recently. Read only.
+---@field no_damage_ticks integer Invulnerability window left.
+---@field arrows_in_body integer
+---@field sleeping boolean Read only.
+---@field leash_holder integer Id holding the lead, -1 for none.
+---@field left_handed boolean
+---@field breed_age integer Negative is a baby.
+---@field love_ticks integer
+---@field love_cause string? Uuid that fed it.
+---@field owner string? Tamed owner uuid.
+---@field sitting boolean
+---@field tamed_horse boolean
+---@field cube_size integer Slime and magma cube size.
+---@field fuse integer Primed tnt fuse.
+---@field powered boolean Charged creeper.
+---@field swell integer Creeper fuse progress.
+---@field profession string Villager profession path.
+---@field villager_level integer 1 to 5.
+---@field villager_experience integer
+---@field owner_id integer Id of whoever shot a projectile, -1 for none.
+---@field critical boolean Critical arrow.
+---@field arrow_pickup integer 0 disallowed, 1 allowed, 2 creative only.
+---@field pierce_level integer
+---@field explosion_power number
+---@field category string Mob category such as `monster` or `creature`. Read only.
+---@field display_text string? Text of a text display, MiniMessage; reaches clients that already see it.
+---@field object_data integer Spawn data, such as a falling block's block state id.
+---@field bolt_visual_only boolean Lightning bolt state.
+---@field bolt_life integer Lightning bolt state.
+---@field bolt_flashes integer Lightning bolt state.
 local Entity = {}
 
 function Entity:remove() end
@@ -94,6 +148,189 @@ function Entity:remove() end
 ---@param where basalt.Where
 ---@return boolean
 function Entity:teleport(where) end
+
+---Hurts through the combat path (invulnerability window, armour, events); `cause` is a damage type path, default `generic`.
+---@param amount number
+---@param cause? string
+---@param attacker_id? integer
+---@return boolean
+function Entity:damage(amount, cause, attacker_id) end
+
+---Dies now, running the death sequence.
+---@return boolean
+function Entity:kill() end
+
+---Gives a status effect; -1 ticks is infinite.
+---@param effect string
+---@param ticks integer
+---@param amplifier integer
+---@param ambient? boolean
+---@param particles? boolean
+---@param icon? boolean
+---@return boolean
+function Entity:add_effect(effect, ticks, amplifier, ambient, particles, icon) end
+
+---@param effect string
+---@return boolean
+function Entity:remove_effect(effect) end
+
+---@return boolean
+function Entity:clear_effects() end
+
+---@param effect string
+---@return boolean
+function Entity:has_effect(effect) end
+
+---@return { effect: string, duration: string, amplifier: string, ambient: string, particles: string, icon: string }[]
+function Entity:effects() end
+
+---The attribute value with modifiers.
+---@param id string
+---@return number
+function Entity:attribute(id) end
+
+---@param id string
+---@return number
+function Entity:attribute_base(id) end
+
+---@param id string
+---@return number
+function Entity:attribute_default(id) end
+
+---@param id string
+---@param value number
+---@return boolean
+function Entity:set_attribute_base(id, value) end
+
+---@param id string
+---@return boolean
+function Entity:has_attribute(id) end
+
+---@param id string
+---@return { id: string, amount: number, operation: string }[]
+function Entity:attribute_modifiers(id) end
+
+---@param attribute string
+---@param id string
+---@param amount number
+---@param operation "add_value"|"add_multiplied_base"|"add_multiplied_total"
+---@return boolean
+function Entity:add_attribute_modifier(attribute, id, amount, operation) end
+
+---@param attribute string
+---@param id string
+---@return boolean
+function Entity:remove_attribute_modifier(attribute, id) end
+
+---The stack in a slot as NBT bytes.
+---@param slot "mainhand"|"offhand"|"feet"|"legs"|"chest"|"head"|"body"|"saddle"
+---@return string?
+function Entity:equipment(slot) end
+
+---A nil stack clears the slot.
+---@param slot "mainhand"|"offhand"|"feet"|"legs"|"chest"|"head"|"body"|"saddle"
+---@param stack_nbt string?
+---@return boolean
+function Entity:set_equipment(slot, stack_nbt) end
+
+---@param slot string
+---@return number
+function Entity:drop_chance(slot) end
+
+---@param slot string
+---@param chance number
+---@return boolean
+function Entity:set_drop_chance(slot, chance) end
+
+---@param vehicle_id integer
+---@return boolean
+function Entity:mount(vehicle_id) end
+
+---@return boolean
+function Entity:dismount() end
+
+---Throws all riders off.
+---@return boolean
+function Entity:eject() end
+
+---Vanilla knockback away from (x, z).
+---@param strength number
+---@param x number
+---@param z number
+---@return boolean
+function Entity:knockback(strength, x, z) end
+
+---Adds to the velocity.
+---@param x number
+---@param y number
+---@param z number
+---@return boolean
+function Entity:push(x, y, z) end
+
+---Turns the head towards a point.
+---@param x number
+---@param y number
+---@param z number
+---@param yaw_speed? number
+---@param pitch_speed? number
+---@return boolean
+function Entity:look_at(x, y, z, yaw_speed, pitch_speed) end
+
+---Starts walking a path to the point; `speed` is a modifier, default 1.0.
+---@param x number
+---@param y number
+---@param z number
+---@param speed? number
+---@return boolean
+function Entity:move_to(x, y, z, speed) end
+
+---@param x number
+---@param y number
+---@param z number
+---@return boolean
+function Entity:can_reach(x, y, z) end
+
+---@return boolean
+function Entity:stop_path() end
+
+---@return boolean
+function Entity:has_path() end
+
+---Runs an operation by name, such as `is_breed_item`.
+---@param operation string
+---@param ... any
+---@return any
+function Entity:call(operation, ...) end
+
+---Any property by name, including `loot_table` (string) and `loot_seed` (integer).
+---@param name string
+---@return any
+function Entity:get(name) end
+
+---@param name string
+---@param value any
+---@return boolean
+function Entity:set(name, value) end
+
+---The whole entity NBT, or the compound at a dotted path.
+---@param path? string
+---@return string?
+function Entity:nbt(path) end
+
+---@param path string
+---@return any
+function Entity:nbt_value(path) end
+
+---@param path string
+---@param type "bool"|"byte"|"short"|"int"|"long"|"float"|"double"|"string"
+---@param value any
+---@return boolean
+function Entity:nbt_set(path, type, value) end
+
+---Merges a compound into the entity; live fields are updated, the rest is kept as extra data.
+---@param nbt string
+---@return boolean
+function Entity:merge_nbt(nbt) end
 
 ---@class basalt.Player
 ---@field name string
@@ -169,6 +406,18 @@ function Player:give(id, count) end
 ---@param where basalt.Where
 ---@return boolean
 function Player:teleport(where) end
+
+---Grants a permission on top of the player's group, for the session; the source is this plugin.
+---@param node string
+function Player:grant(node) end
+
+---Denies a permission on top of the player's group, for the session.
+---@param node string
+function Player:deny(node) end
+
+---Drops this plugin's grant or denial of a permission.
+---@param node string
+function Player:revoke(node) end
 
 ---Who ran a command: the console or a player.
 ---@class basalt.Source
@@ -300,6 +549,70 @@ function World:rule(name) end
 ---@param where basalt.Where
 ---@return basalt.Entity?
 function World:spawn(type, where) end
+
+---Spawns with a facing and the spawn event reason (default `plugin`).
+---@param type string
+---@param x number
+---@param y number
+---@param z number
+---@param yaw? number
+---@param reason? string
+---@return basalt.Entity?
+function World:spawn_as(type, x, y, z, yaw, reason) end
+
+---Puts an item on the ground; `item` is as in `inventory:set`.
+---@param item basalt.ItemSpec
+---@param x number
+---@param y number
+---@param z number
+---@param vx? number
+---@param vy? number
+---@param vz? number
+---@return basalt.Entity?
+function World:drop_item(item, x, y, z, vx, vy, vz) end
+
+---An explosion of the given power; blocks are spared when `break_blocks` is false (default true).
+---@param x number
+---@param y number
+---@param z number
+---@param power number
+---@param break_blocks? boolean
+---@param source_id? integer
+---@return boolean
+function World:explode(x, y, z, power, break_blocks, source_id) end
+
+---The plugin-owned compound of the world as SNBT.
+---@return string
+function World:plugin_data() end
+
+---@param snbt string
+function World:set_plugin_data(snbt) end
+
+---@param chunk_x integer
+---@param chunk_z integer
+---@return string
+function World:chunk_data(chunk_x, chunk_z) end
+
+---@param chunk_x integer
+---@param chunk_z integer
+---@param snbt string
+function World:set_chunk_data(chunk_x, chunk_z, snbt) end
+
+---@param pos basalt.Where
+---@return string
+function World:block_entity_data(pos) end
+
+---@param pos basalt.Where
+---@param snbt string
+function World:set_block_entity_data(pos, snbt) end
+
+---@param entity basalt.Entity|integer
+---@return string
+function World:entity_data(entity) end
+
+---@param entity basalt.Entity|integer
+---@param snbt string
+function World:set_entity_data(entity, snbt) end
 
 ---@overload fun(self: basalt.World, text: string, x: number, y: number, z: number): basalt.Hologram?
 ---@param text string
@@ -799,6 +1112,283 @@ function worlds.registry(registry) end
 ---@return table<string, string[]>
 function worlds.tags(registry) end
 
+---Recipes in the datapack's own JSON format.
+---@class basalt.recipes
+recipes = {}
+
+---Registers a recipe; false when the id is taken or the JSON is not a recipe.
+---@param id string
+---@param json string
+---@return boolean
+function recipes.add(id, json) end
+
+---Takes a recipe, the server's own included, out of every lookup.
+---@param id string
+---@return boolean
+function recipes.remove(id) end
+
+---@param id string
+---@return boolean
+function recipes.has(id) end
+
+---Every recipe id: the datapack's first, then the added ones.
+---@return string[]
+function recipes.ids() end
+
+---Empties the list.
+function recipes.clear() end
+
+---Puts back the datapack's recipes and drops the added ones.
+function recipes.reset() end
+
+---Offline players, operators, the whitelist and bans.
+---@class basalt.access
+access = {}
+
+---@param who basalt.Player|string A player, uuid or name.
+---@return boolean
+function access.is_banned(who) end
+
+---@param who basalt.Player|string
+---@return boolean
+function access.is_whitelisted(who) end
+
+---@param who basalt.Player|string
+---@return boolean
+function access.is_operator(who) end
+
+---@param name string
+---@return { uuid: string, name: string, first_seen: integer, last_seen: integer }?
+function access.known(name) end
+
+---Scoreboards; a board is an integer handle and 0 is the server board. Text arguments are MiniMessage.
+---@class basalt.scoreboards
+scoreboards = {}
+
+---@alias basalt.TeamOptions { display_name?: string, prefix?: string, suffix?: string, color?: string, friendly_fire?: boolean, see_invisible?: boolean, name_tags?: string, death_messages?: string, collision?: string }
+
+---@return integer
+function scoreboards.main() end
+
+---Makes a board of the plugin's own.
+---@return integer
+function scoreboards.create() end
+
+---@param board integer
+function scoreboards.release(board) end
+
+---@param board integer
+---@return string[]
+function scoreboards.objectives(board) end
+
+---@param board integer
+---@param name string
+---@param criterion? string
+---@param title? string
+---@param hearts? boolean
+function scoreboards.objective_add(board, name, criterion, title, hearts) end
+
+---@param board integer
+---@param name string
+function scoreboards.objective_remove(board, name) end
+
+---With a nil third argument it returns the objective shown in the slot.
+---@param board integer
+---@param slot "list"|"sidebar"|"below_name"|string
+---@param name? string|false
+---@return string?
+function scoreboards.display(board, slot, name) end
+
+---@param board integer
+---@param entry string
+---@param objective string
+---@return integer?
+function scoreboards.score(board, entry, objective) end
+
+---@param board integer
+---@param entry string
+---@param objective string
+---@param value integer
+function scoreboards.set_score(board, entry, objective, value) end
+
+---@param board integer
+---@param entry string
+---@param objective? string
+function scoreboards.reset_score(board, entry, objective) end
+
+---@param board integer
+---@return string[]
+function scoreboards.entries(board) end
+
+---@param board integer
+---@return string[]
+function scoreboards.teams(board) end
+
+---@param board integer
+---@param name string
+function scoreboards.team_add(board, name) end
+
+---@param board integer
+---@param name string
+function scoreboards.team_remove(board, name) end
+
+---@param board integer
+---@param name string
+---@param options basalt.TeamOptions
+function scoreboards.team_set(board, name, options) end
+
+---@param board integer
+---@param team string
+---@param entry string
+function scoreboards.team_join(board, team, entry) end
+
+---@param board integer
+---@param team string
+---@param entry string
+function scoreboards.team_leave(board, team, entry) end
+
+---@param board integer
+---@param entry string
+---@return string?
+function scoreboards.team_of(board, entry) end
+
+---Draws a board for a player; with a nil board it returns the one shown.
+---@param player basalt.Player
+---@param board? integer
+---@return integer?
+function scoreboards.show(player, board) end
+
+---@alias basalt.BossBarOptions { title?: string, color?: string, style?: string, progress?: number, key?: string, darken_sky?: boolean, boss_music?: boolean, fog?: boolean, visible?: boolean }
+
+---Boss bars; a bar created with a `key` is kept like `/bossbar` ones.
+---@class basalt.boss_bars
+boss_bars = {}
+
+---@param options basalt.BossBarOptions
+---@return string id
+function boss_bars.create(options) end
+
+---@param id string
+---@param options basalt.BossBarOptions
+function boss_bars.update(id, options) end
+
+---@param id string
+function boss_bars.remove(id) end
+
+---@param id string
+---@param player basalt.Player
+function boss_bars.add_player(id, player) end
+
+---@param id string
+---@param player basalt.Player
+function boss_bars.remove_player(id, player) end
+
+---@param id string
+---@return string[]
+function boss_bars.players(id) end
+
+---@return string[]
+function boss_bars.kept() end
+
+---@class basalt.advancements
+advancements = {}
+
+---@return string[]
+function advancements.ids() end
+
+---@param id string
+---@return { id: string, parent: string?, root: string, criteria: string[], children: string[], frame: string, icon: string }?
+function advancements.info(id) end
+
+---@param player basalt.Player
+---@param id string
+---@param criterion? string
+function advancements.grant(player, id, criterion) end
+
+---@param player basalt.Player
+---@param id string
+---@param criterion? string
+function advancements.revoke(player, id, criterion) end
+
+---Criterion to the time it was obtained, in milliseconds.
+---@param player basalt.Player
+---@param id string
+---@return table<string, integer>
+function advancements.progress(player, id) end
+
+---The `/tick` machinery.
+---@class basalt.tick
+tick = {}
+
+---@return number
+function tick.rate() end
+
+---@param rate number
+function tick.set_rate(rate) end
+
+---Reads the freeze state, or sets it.
+---@param frozen? boolean
+---@return boolean
+function tick.frozen(frozen) end
+
+---@param count integer
+function tick.step(count) end
+
+---@param count integer
+function tick.sprint(count) end
+
+function tick.stop_sprint() end
+
+---@return { tps_1m: number, tps_5m: number, tps_15m: number, mean_tick_ms: number }
+function tick.pace() end
+
+---Links of the client's pause menu, read at login.
+---@class basalt.server_links
+server_links = {}
+
+---@alias basalt.ServerLink { kind?: "bug_report"|"community_guidelines"|"support"|"status"|"feedback"|"community"|"website"|"forums"|"news"|"announcements", label?: string, url: string }
+
+---@return basalt.ServerLink[]
+function server_links.list() end
+
+---A link without a kind carries a JSON `label`.
+---@param links basalt.ServerLink[]
+function server_links.set(links) end
+
+---@class basalt.datapacks
+datapacks = {}
+
+---@return { id: string, enabled: boolean, required: boolean, compatibility: string, source: string }[]
+function datapacks.list() end
+
+function datapacks.refresh() end
+
+---@class basalt.loot
+loot = {}
+
+---@return string[]
+function loot.tables() end
+
+---Seed 0 rolls without a fixed seed; `looter` is a uuid.
+---@param table string
+---@param context? { world?: string, x?: number, y?: number, z?: number, luck?: number, seed?: integer, looter?: string }
+---@return { item: string, count: integer, components: string }[]
+function loot.roll(table, context) end
+
+---@class basalt.maps
+maps = {}
+
+---@param world string
+---@param center_x integer
+---@param center_z integer
+---@param scale integer
+---@return integer id
+function maps.create(world, center_x, center_z, scale) end
+
+---@param id integer
+---@return { dimension: string, scale: integer, center_x: integer, center_z: integer, locked: boolean }?
+function maps.info(id) end
+
 ---@class basalt.log
 log = {}
 
@@ -1292,6 +1882,8 @@ function _:cancel(message) end
 ---@field cause string
 ---@field amount number (the handler may change it)
 ---@field attacker_name string
+---@field attacker_id any
+---@field direct_id any
 local _ = {}
 
 ---@param message? string
@@ -1309,6 +1901,7 @@ function _:cancel(message) end
 ---@field y number
 ---@field z number
 ---@field killer_name string
+---@field killer_id any
 local _ = {}
 
 ---@class basalt.event.server_tick
@@ -1703,6 +2296,121 @@ function _:cancel(message) end
 ---@field player_uuid string
 ---@field world string
 ---@field kind string
+---@field reason string
+local _ = {}
+
+---@class basalt.event.inventory_drag
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field type any
+---@field slots any
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.inventory_prepare
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field kind string
+---@field recipe any
+---@field result string (the handler may change it)
+---@field name any
+---@field cost any (the handler may change it)
+local _ = {}
+
+---@class basalt.event.inventory_take
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field kind string
+---@field recipe any
+---@field result string
+---@field shift any
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.inventory_enchant_prepare
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field item string
+---@field bookshelves any
+---@field offers any (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.inventory_enchant
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field item string
+---@field button integer
+---@field cost any (the handler may change it)
+---@field enchants any (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.furnace_burn
+---@field name string
+---@field cancelled boolean
+---@field pos basalt.Position
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field cooker string
+---@field fuel any
+---@field burn_time any (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.furnace_start
+---@field name string
+---@field cancelled boolean
+---@field pos basalt.Position
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field cooker string
+---@field source string
+---@field total any
+---@field recipe any
+local _ = {}
+
+---@class basalt.event.inventory_changed
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
 local _ = {}
 
 ---@class basalt.event.inventory_click
@@ -1732,6 +2440,9 @@ function _:cancel(message) end
 ---@field cooker string
 ---@field item string
 ---@field result string
+---@field source string
+---@field output any (the handler may change it)
+---@field recipe any
 local _ = {}
 
 ---@param message? string
@@ -1855,6 +2566,125 @@ function _:cancel(message) end
 ---@field waves integer
 ---@field won boolean
 local _ = {}
+
+---@class basalt.event.entity_drops
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field drops any (the handler may change it)
+---@field exp any (the handler may change it)
+---@field killer_id any
+local _ = {}
+
+---@class basalt.event.entity_launch
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field shooter_id any
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.vehicle_damage
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field amount number (the handler may change it)
+---@field attacker_id any
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.vehicle_destroy
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field attacker_id any
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.entity_resurrect
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field hand string
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.entity_add
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field reason string
+local _ = {}
+
+---@class basalt.event.entity_target
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field target_id any (the handler may change it)
+---@field previous_id any
+---@field reason string
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.entity_potion_effect
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field effect string
+---@field amplifier integer
+---@field duration number
+---@field action string
+---@field cause string
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
 
 ---@class basalt.event.entity_combust
 ---@field name string
@@ -2004,6 +2834,22 @@ function _:cancel(message) end
 ---@overload fun(event: "inventory.open", filter: table, handler: fun(e: basalt.event.inventory_open))
 ---@overload fun(event: "inventory.close", handler: fun(e: basalt.event.inventory_close))
 ---@overload fun(event: "inventory.close", filter: table, handler: fun(e: basalt.event.inventory_close))
+---@overload fun(event: "inventory.drag", handler: fun(e: basalt.event.inventory_drag))
+---@overload fun(event: "inventory.drag", filter: table, handler: fun(e: basalt.event.inventory_drag))
+---@overload fun(event: "inventory.prepare", handler: fun(e: basalt.event.inventory_prepare))
+---@overload fun(event: "inventory.prepare", filter: table, handler: fun(e: basalt.event.inventory_prepare))
+---@overload fun(event: "inventory.take", handler: fun(e: basalt.event.inventory_take))
+---@overload fun(event: "inventory.take", filter: table, handler: fun(e: basalt.event.inventory_take))
+---@overload fun(event: "inventory.enchant_prepare", handler: fun(e: basalt.event.inventory_enchant_prepare))
+---@overload fun(event: "inventory.enchant_prepare", filter: table, handler: fun(e: basalt.event.inventory_enchant_prepare))
+---@overload fun(event: "inventory.enchant", handler: fun(e: basalt.event.inventory_enchant))
+---@overload fun(event: "inventory.enchant", filter: table, handler: fun(e: basalt.event.inventory_enchant))
+---@overload fun(event: "furnace.burn", handler: fun(e: basalt.event.furnace_burn))
+---@overload fun(event: "furnace.burn", filter: table, handler: fun(e: basalt.event.furnace_burn))
+---@overload fun(event: "furnace.start", handler: fun(e: basalt.event.furnace_start))
+---@overload fun(event: "furnace.start", filter: table, handler: fun(e: basalt.event.furnace_start))
+---@overload fun(event: "inventory.changed", handler: fun(e: basalt.event.inventory_changed))
+---@overload fun(event: "inventory.changed", filter: table, handler: fun(e: basalt.event.inventory_changed))
 ---@overload fun(event: "inventory.click", handler: fun(e: basalt.event.inventory_click))
 ---@overload fun(event: "inventory.click", filter: table, handler: fun(e: basalt.event.inventory_click))
 ---@overload fun(event: "inventory.smelt", handler: fun(e: basalt.event.inventory_smelt))
@@ -2024,6 +2870,22 @@ function _:cancel(message) end
 ---@overload fun(event: "player.portal", filter: table, handler: fun(e: basalt.event.player_portal))
 ---@overload fun(event: "raid.finish", handler: fun(e: basalt.event.raid_finish))
 ---@overload fun(event: "raid.finish", filter: table, handler: fun(e: basalt.event.raid_finish))
+---@overload fun(event: "entity.drops", handler: fun(e: basalt.event.entity_drops))
+---@overload fun(event: "entity.drops", filter: table, handler: fun(e: basalt.event.entity_drops))
+---@overload fun(event: "entity.launch", handler: fun(e: basalt.event.entity_launch))
+---@overload fun(event: "entity.launch", filter: table, handler: fun(e: basalt.event.entity_launch))
+---@overload fun(event: "vehicle.damage", handler: fun(e: basalt.event.vehicle_damage))
+---@overload fun(event: "vehicle.damage", filter: table, handler: fun(e: basalt.event.vehicle_damage))
+---@overload fun(event: "vehicle.destroy", handler: fun(e: basalt.event.vehicle_destroy))
+---@overload fun(event: "vehicle.destroy", filter: table, handler: fun(e: basalt.event.vehicle_destroy))
+---@overload fun(event: "entity.resurrect", handler: fun(e: basalt.event.entity_resurrect))
+---@overload fun(event: "entity.resurrect", filter: table, handler: fun(e: basalt.event.entity_resurrect))
+---@overload fun(event: "entity.add", handler: fun(e: basalt.event.entity_add))
+---@overload fun(event: "entity.add", filter: table, handler: fun(e: basalt.event.entity_add))
+---@overload fun(event: "entity.target", handler: fun(e: basalt.event.entity_target))
+---@overload fun(event: "entity.target", filter: table, handler: fun(e: basalt.event.entity_target))
+---@overload fun(event: "entity.potion_effect", handler: fun(e: basalt.event.entity_potion_effect))
+---@overload fun(event: "entity.potion_effect", filter: table, handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.combust", handler: fun(e: basalt.event.entity_combust))
 ---@overload fun(event: "entity.combust", filter: table, handler: fun(e: basalt.event.entity_combust))
 ---@overload fun(event: "block.fade", handler: fun(e: basalt.event.block_fade))
@@ -2151,6 +3013,22 @@ function on(event, handler) end
 ---@overload fun(event: "inventory.open", filter: table, handler: fun(e: basalt.event.inventory_open))
 ---@overload fun(event: "inventory.close", handler: fun(e: basalt.event.inventory_close))
 ---@overload fun(event: "inventory.close", filter: table, handler: fun(e: basalt.event.inventory_close))
+---@overload fun(event: "inventory.drag", handler: fun(e: basalt.event.inventory_drag))
+---@overload fun(event: "inventory.drag", filter: table, handler: fun(e: basalt.event.inventory_drag))
+---@overload fun(event: "inventory.prepare", handler: fun(e: basalt.event.inventory_prepare))
+---@overload fun(event: "inventory.prepare", filter: table, handler: fun(e: basalt.event.inventory_prepare))
+---@overload fun(event: "inventory.take", handler: fun(e: basalt.event.inventory_take))
+---@overload fun(event: "inventory.take", filter: table, handler: fun(e: basalt.event.inventory_take))
+---@overload fun(event: "inventory.enchant_prepare", handler: fun(e: basalt.event.inventory_enchant_prepare))
+---@overload fun(event: "inventory.enchant_prepare", filter: table, handler: fun(e: basalt.event.inventory_enchant_prepare))
+---@overload fun(event: "inventory.enchant", handler: fun(e: basalt.event.inventory_enchant))
+---@overload fun(event: "inventory.enchant", filter: table, handler: fun(e: basalt.event.inventory_enchant))
+---@overload fun(event: "furnace.burn", handler: fun(e: basalt.event.furnace_burn))
+---@overload fun(event: "furnace.burn", filter: table, handler: fun(e: basalt.event.furnace_burn))
+---@overload fun(event: "furnace.start", handler: fun(e: basalt.event.furnace_start))
+---@overload fun(event: "furnace.start", filter: table, handler: fun(e: basalt.event.furnace_start))
+---@overload fun(event: "inventory.changed", handler: fun(e: basalt.event.inventory_changed))
+---@overload fun(event: "inventory.changed", filter: table, handler: fun(e: basalt.event.inventory_changed))
 ---@overload fun(event: "inventory.click", handler: fun(e: basalt.event.inventory_click))
 ---@overload fun(event: "inventory.click", filter: table, handler: fun(e: basalt.event.inventory_click))
 ---@overload fun(event: "inventory.smelt", handler: fun(e: basalt.event.inventory_smelt))
@@ -2171,6 +3049,22 @@ function on(event, handler) end
 ---@overload fun(event: "player.portal", filter: table, handler: fun(e: basalt.event.player_portal))
 ---@overload fun(event: "raid.finish", handler: fun(e: basalt.event.raid_finish))
 ---@overload fun(event: "raid.finish", filter: table, handler: fun(e: basalt.event.raid_finish))
+---@overload fun(event: "entity.drops", handler: fun(e: basalt.event.entity_drops))
+---@overload fun(event: "entity.drops", filter: table, handler: fun(e: basalt.event.entity_drops))
+---@overload fun(event: "entity.launch", handler: fun(e: basalt.event.entity_launch))
+---@overload fun(event: "entity.launch", filter: table, handler: fun(e: basalt.event.entity_launch))
+---@overload fun(event: "vehicle.damage", handler: fun(e: basalt.event.vehicle_damage))
+---@overload fun(event: "vehicle.damage", filter: table, handler: fun(e: basalt.event.vehicle_damage))
+---@overload fun(event: "vehicle.destroy", handler: fun(e: basalt.event.vehicle_destroy))
+---@overload fun(event: "vehicle.destroy", filter: table, handler: fun(e: basalt.event.vehicle_destroy))
+---@overload fun(event: "entity.resurrect", handler: fun(e: basalt.event.entity_resurrect))
+---@overload fun(event: "entity.resurrect", filter: table, handler: fun(e: basalt.event.entity_resurrect))
+---@overload fun(event: "entity.add", handler: fun(e: basalt.event.entity_add))
+---@overload fun(event: "entity.add", filter: table, handler: fun(e: basalt.event.entity_add))
+---@overload fun(event: "entity.target", handler: fun(e: basalt.event.entity_target))
+---@overload fun(event: "entity.target", filter: table, handler: fun(e: basalt.event.entity_target))
+---@overload fun(event: "entity.potion_effect", handler: fun(e: basalt.event.entity_potion_effect))
+---@overload fun(event: "entity.potion_effect", filter: table, handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.combust", handler: fun(e: basalt.event.entity_combust))
 ---@overload fun(event: "entity.combust", filter: table, handler: fun(e: basalt.event.entity_combust))
 ---@overload fun(event: "block.fade", handler: fun(e: basalt.event.block_fade))
