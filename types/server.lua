@@ -144,6 +144,61 @@ function Inventory:clear() end
 ---@field burns_in_day boolean Catches fire in sunlight.
 ---@field despawn_in_peaceful integer -1 default, 0 never, 1 despawns in peaceful.
 ---@field nav_open_doors boolean The default ground navigation opens doors.
+---@field bounce boolean A projectile that hits a block or entity reflects its velocity instead of landing.
+---@field incendiary boolean An explosive or fireball sets fires; true for fireball and small_fireball.
+---@field arrow_knockback integer Arrow punch in levels; reads the weapon's punch until set.
+---@field arrow_life integer Ticks an arrow has spent in the ground; it despawns at 1200.
+---@field fired_from string? Item id of the weapon that fired the arrow.
+---@field wither_charged boolean Blue wither skull.
+---@field trident_glint boolean Enchantment glint on a thrown trident.
+---@field attached_to integer Entity id a firework rocket boosts, -1 for none.
+---@field eye_despawn integer Ticks an eye of ender has flown; it ends at 80.
+---@field eye_drops boolean The eye drops as an item when it ends instead of shattering.
+---@field bolt_cause integer Entity id that caused a lightning bolt, -1 for none.
+---@field gliding boolean Forces the shared flag shown to clients.
+---@field swimming boolean Forces the shared flag shown to clients.
+---@field crouching boolean Forces the shared flag shown to clients.
+---@field sprinting boolean Forces the shared flag shown to clients.
+---@field pose integer Forces a pose by ordinal; -1 clears it.
+---@field visual_fire integer -1 follows the fire, 0 never, 1 always.
+---@field freeze_locked boolean Stops the freeze count from moving either way.
+---@field jumping boolean Jump input flag.
+---@field portal_cooldown integer Ticks until the entity may use a portal again.
+---@field no_action_time integer Ticks the mob has been idle.
+---@field no_physics boolean Ignores collisions and pushing.
+---@field riptiding boolean Spin attack flag.
+---@field bee_stingers integer Stuck stingers.
+---@field bee_stinger_cooldown integer
+---@field arrow_cooldown integer
+---@field max_no_damage_ticks integer Length of the hurt cooldown, 20 by default.
+---@field hurt_direction number Yaw offset of the last hit.
+---@field visible_by_default boolean False hides the entity from everyone until shown per player.
+---@field spawn_reason string Read only: why the mob spawned.
+---@field sound_volume number Read only: voice volume of the mob.
+---@field move_forward number Movement input of the mob controller.
+---@field move_sideways number Movement input of the mob controller.
+---@field move_up number Movement input of the mob controller.
+---@field active_slot integer Read only: hand of the item in use, 0 main, 1 off, -1 none.
+---@field active_ticks integer Remaining ticks of an item use.
+---@field active_used integer Elapsed ticks of an item use.
+---@field creeper_ignited boolean Creeper swells and blows up.
+---@field creeper_igniter integer Entity id of who lit the creeper, -1 none.
+---@field evoker_wololo integer Entity id of the sheep the evoker turns red, -1 none.
+---@field polar_standing boolean Polar bear on its hind legs.
+---@field strider_shivering boolean The cold look of a strider.
+---@field turtle_laying_egg boolean
+---@field turtle_going_home boolean
+---@field parrot_dancing boolean
+---@field wither_portals boolean Wither allowed through portals.
+---@field cube_wander boolean False: a slime, magma cube or sulfur cube never hops by itself.
+---@field boost_total integer Item steering boost length of a pig or strider.
+---@field boost_time integer Ticks of the boost gone.
+---@field boost_active boolean Read only: a boost is running.
+---@field witch_drinking boolean Read only.
+---@field witch_use_ticks integer Ticks left on the witch's drink.
+---@field bat_target string? `"x,y,z"` the flight goal heads for.
+---@field guardian_moving boolean Read only: spikes drawn in while it moves.
+---@field cart_detonate number Write only: speed squared a tnt minecart blows up with on its next turn.
 local Entity = {}
 
 function Entity:remove() end
@@ -325,6 +380,36 @@ function Entity:has_goal(key) end
 ---@return { key: string, priority: integer, running: boolean, plugin: boolean, flags: string }[]
 function Entity:goals() end
 
+---The projectile hits that entity on its next tick, through the code of a real hit.
+---@param id integer
+---@return boolean
+function Entity:hit_entity(id) end
+
+---A thrown potion splashes or a wind charge bursts where it is, on the next tick.
+---@return boolean
+function Entity:land() end
+
+---Registers a hook spawned by a plugin as that player's own bobber.
+---@param player_id integer
+---@return boolean
+function Entity:hook_own(player_id) end
+
+---The hook's owner reels in with the rod in that hand; the rod wear, -1 when there is nothing to reel.
+---@param off_hand boolean
+---@return integer
+function Entity:hook_retrieve(off_hand) end
+
+---The x, y, z an eye of ender flies towards, empty when none.
+---@return string[]
+function Entity:eye_target() end
+
+---@param x number
+---@param y number
+---@param z number
+---@param reset boolean Restarts the flight timer.
+---@return boolean
+function Entity:set_eye_target(x, y, z, reset) end
+
 ---Runs an operation by name, such as `is_breed_item`.
 ---@param operation string
 ---@param ... any
@@ -450,6 +535,7 @@ function Entity:merge_nbt(nbt) end
 ---@field unsaturated_regen_ticks integer
 ---@field starvation_ticks integer
 ---@field killer string? Uuid of the player credited with the last hit.
+---@field slot_limit integer The most one inventory slot holds, 1 to 99.
 local Player = {}
 
 ---@param message string
@@ -965,6 +1051,19 @@ function Player:clear_dialog() end
 ---Removes a signed chat message from the client.
 ---@param signature_hex string The 256 byte signature as hex.
 function Player:delete_chat(signature_hex) end
+
+---Shows a dialog: SNBT starting with `{` or the id of a registry dialog; answers arrive as `player.custom_click`.
+---@param dialog string
+---@return boolean
+function Player:show_dialog(dialog) end
+
+---Sends the client back to the configuration phase and into the world again; false for a client without one.
+---@return boolean
+function Player:reenter_configuration() end
+
+---The player saved as an entity compound in SNBT.
+---@return string
+function Player:as_string() end
 
 ---Reopens the open screen under a new title.
 ---@param json string
@@ -1603,6 +1702,13 @@ function World:pois(x, y, z, radius, types, occupancy) end
 ---@param rules { limits?: table<string, integer>, ticks_per?: table<string, integer>, allow_monsters?: boolean, allow_animals?: boolean }
 function World:set_spawn_rules(rules) end
 
+---The flow vector of the fluid at a block, zero when none.
+---@param x integer
+---@param y integer
+---@param z integer
+---@return { x: number, y: number, z: number }
+function World:fluid_flow(x, y, z) end
+
 ---One random tick on that block; true when a block changed.
 ---@param x integer
 ---@param y integer
@@ -1619,7 +1725,7 @@ function World:random_tick(x, y, z) end
 ---@return { x: integer, y: integer, z: integer, before: string, after: string }[]?
 function World:place_tree(tree, x, y, z, apply) end
 
----`void_damage` (0 or 1), `void_damage_amount`, `void_damage_offset` or `simulation_distance`.
+---`void_damage` (0 or 1), `void_damage_amount`, `void_damage_offset`, `simulation_distance` or `hardcore` (0 or 1).
 ---@param key string
 ---@return number?
 function World:tunable(key) end
@@ -1923,6 +2029,7 @@ function worlds.unload(world, save) end
 ---@class basalt.settings
 settings = {}
 
+---The readable keys; `hide_online_players`, `level_type`, `initial_enabled_packs`, `initial_disabled_packs`, `allow_nether` and `allow_end` are read only.
 ---@return string[]
 function settings.keys() end
 

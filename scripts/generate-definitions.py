@@ -45,7 +45,7 @@ EVENT_BOOLEAN = {"sneaking", "sprinting", "raining", "thundering", "from_raining
                  "extending", "mounting", "entering", "generated", "broken", "won", "flying", "signing", "chat_colors", "silent", "drop_items", "raises", "buildable", "show_effect", "gliding", "swimming", "drop", "make_all"}
 
 
-EVENT_OVERRIDE = {("player.armor_change", "slot"): "string", ("entity.goal", "result"): "boolean"}
+EVENT_OVERRIDE = {("player.armor_change", "slot"): "string", ("entity.goal", "result"): "boolean", ("entity.allied_check", "allied"): "boolean"}
 
 
 def event_type(field, event=None):
