@@ -31,7 +31,7 @@ EVENT_STRING = {"id", "payload", "world", "from_world", "to_world", "message", "
                 "difficulty", "from_difficulty", "line1", "line2", "line3", "line4", "title", "pages", "source_id",
                 "old_item", "new_item", "advancement", "pack_id", "status", "locale", "main_hand", "buffer",
                 "completions", "state", "species", "face", "source_block", "drops", "instrument", "blocks", "fuel", "results",
-                "affected", "event", "recipe", "statistic", "commands", "to_type", "outcome", "decoration"}
+                "affected", "event", "key", "phase", "recipe", "statistic", "commands", "to_type", "outcome", "decoration"}
 EVENT_NUMBER = {"x", "y", "z", "from_x", "from_y", "from_z", "power", "amount", "time", "from_time", "duration",
                 "damage", "health", "igniter_x", "igniter_y", "igniter_z", "to_x", "to_y", "to_z", "duration_ms",
                 "remaining_ms", "strength", "vx", "vy", "vz", "old_size", "new_size", "old_x", "old_z", "new_x", "new_z"}
@@ -45,7 +45,7 @@ EVENT_BOOLEAN = {"sneaking", "sprinting", "raining", "thundering", "from_raining
                  "extending", "mounting", "entering", "generated", "broken", "won", "flying", "signing", "chat_colors", "silent", "drop_items", "raises", "buildable", "show_effect", "gliding", "swimming", "drop", "make_all"}
 
 
-EVENT_OVERRIDE = {("player.armor_change", "slot"): "string"}
+EVENT_OVERRIDE = {("player.armor_change", "slot"): "string", ("entity.goal", "result"): "boolean"}
 
 
 def event_type(field, event=None):

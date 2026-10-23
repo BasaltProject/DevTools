@@ -140,6 +140,11 @@ function Inventory:clear() end
 ---@field bolt_visual_only boolean Lightning bolt state.
 ---@field bolt_life integer Lightning bolt state.
 ---@field bolt_flashes integer Lightning bolt state.
+---@field aggressive boolean The arms-up flag sent to clients; melee goals raise it while they attack.
+---@field age_locked boolean An animal's age no longer moves.
+---@field burns_in_day boolean Catches fire in sunlight.
+---@field despawn_in_peaceful integer -1 default, 0 never, 1 despawns in peaceful.
+---@field nav_open_doors boolean The default ground navigation opens doors.
 local Entity = {}
 
 function Entity:remove() end
@@ -296,6 +301,31 @@ function Entity:stop_path() end
 ---@return boolean
 function Entity:has_path() end
 
+---Adds a goal a plugin owns next to the vanilla ones; `flags` is a comma list of `move look jump target`.
+---@param key string
+---@param priority integer
+---@param flags? string
+---@return boolean
+function Entity:add_goal(key, priority, flags) end
+
+---Retires every goal with that key, vanilla ones by name such as `panic`; returns how many.
+---@param key string
+---@return integer
+function Entity:remove_goal(key) end
+
+---Retires every goal that locks one of the flags, or all of them when none is given.
+---@param flags? string
+---@return integer
+function Entity:remove_goals(flags) end
+
+---@param key string
+---@return boolean
+function Entity:has_goal(key) end
+
+---The selector as it stands.
+---@return { key: string, priority: integer, running: boolean, plugin: boolean, flags: string }[]
+function Entity:goals() end
+
 ---Runs an operation by name, such as `is_breed_item`.
 ---@param operation string
 ---@param ... any
@@ -402,6 +432,25 @@ function Entity:merge_nbt(nbt) end
 ---@field seen_win_screen boolean Not saved.
 ---@field view_distance integer? Per-player distance in chunks; nil restores the server's.
 ---@field simulation_distance integer? Per-player distance in chunks; nil restores the server's.
+---@field pose integer Read only: the protocol pose id.
+---@field use_ticks integer Read only: ticks the active item has been used, -1 for none.
+---@field use_remaining integer Ticks left on the active item, -1 for none.
+---@field visual_fire integer -1 follows the fire, 0 never, 1 always.
+---@field fixed_pose integer Pose id, -1 for none.
+---@field no_physics boolean Spectators always.
+---@field freeze_locked boolean Only round-trips for now.
+---@field waypoint_style string
+---@field waypoint_color integer RGB, -1 for none.
+---@field body_yaw number
+---@field hurt_direction number
+---@field no_action_ticks integer
+---@field maximum_air integer
+---@field max_no_damage_ticks integer The hurt cooldown.
+---@field shield_delay integer Ticks a raised shield waits.
+---@field saturated_regen_ticks integer
+---@field unsaturated_regen_ticks integer
+---@field starvation_ticks integer
+---@field killer string? Uuid of the player credited with the last hit.
 local Player = {}
 
 ---@param message string
@@ -817,6 +866,112 @@ function Player:last_death() end
 ---@return boolean
 function Player:set_last_death(dimension, x, y, z) end
 
+---Starts using the item of a hand (eat, draw a bow, raise a shield, spyglass).
+---@param offhand boolean
+---@return boolean
+function Player:use_start(offhand) end
+
+---Finishes the active item now.
+---@return boolean
+function Player:use_complete() end
+
+---Drops the active item without finishing it.
+---@return boolean
+function Player:use_clear() end
+
+---The entity on a shoulder as its saved compound, or an empty string.
+---@param side integer 0 left, 1 right.
+---@return string
+function Player:shoulder(side) end
+
+---@param side integer 0 left, 1 right.
+---@param snbt string
+function Player:set_shoulder(side, snbt) end
+
+---@param ticks integer
+---@param damage number
+---@param item_snbt string
+function Player:riptide(ticks, damage, item_snbt) end
+
+---@param riptiding boolean
+function Player:set_riptiding(riptiding) end
+
+---Attaches a rocket to a gliding player; the entity id, or -1.
+---@param item_snbt string
+---@return integer
+function Player:firework_boost(item_snbt) end
+
+---Sleeps in the bed at the position; `force` skips range, obstruction and time checks.
+---@param x integer
+---@param y integer
+---@param z integer
+---@param force boolean
+---@return boolean
+function Player:sleep(x, y, z, force) end
+
+---Sends the block entity data of a block to this player only.
+---@param x integer
+---@param y integer
+---@param z integer
+---@param block_id string
+---@param snbt string
+function Player:block_entity(x, y, z, block_id, snbt) end
+
+---Reloads the stored record into the live player and resyncs the client.
+function Player:load_data() end
+
+---The damage log, 8 values per entry: damage type, message id, direct entity id, cause entity id, damage, fall distance, fall location, game tick.
+---@return any[]
+function Player:combat() end
+
+function Player:combat_clear() end
+
+---@param type string
+---@param message_id string
+---@param direct integer
+---@param cause integer
+---@param damage number
+---@param fall_distance number
+---@param location string
+---@param tick integer
+function Player:combat_push(type, message_id, direct, cause, damage, fall_distance, location, tick) end
+
+---Sends the recipe packet and the recipe book again.
+function Player:resend_recipes() end
+
+---A merchant window with trades a plugin made, `offers_snbt` being `{offers:[{buy, buy2, sell, uses, max_uses, xp, price_multiplier, demand, special_price}]}`.
+---@param title_json string
+---@param offers_snbt string
+---@return boolean
+function Player:open_merchant(title_json, offers_snbt) end
+
+---Opens a villager's trades.
+---@param entity_id integer
+---@return boolean
+function Player:open_trades(entity_id) end
+
+---Replaces the profile properties (the skin) and refreshes the tab list entry and every viewer.
+---@param name string
+---@param value string
+---@param signature? string
+function Player:set_profile(name, value, signature, ...) end
+
+---A custom report details packet as key, value pairs, at most 32 pairs.
+---@param key string
+---@param value string
+function Player:report_details(key, value, ...) end
+
+function Player:clear_dialog() end
+
+---Removes a signed chat message from the client.
+---@param signature_hex string The 256 byte signature as hex.
+function Player:delete_chat(signature_hex) end
+
+---Reopens the open screen under a new title.
+---@param json string
+---@return boolean
+function Player:window_title(json) end
+
 ---One ender chest slot as an item compound.
 ---@param i integer
 ---@return string
@@ -906,6 +1061,7 @@ function Hologram:remove() end
 ---@field forced_chunks { [integer]: { [1]: integer, [2]: integer } } Read only: `{{x, z}}`.
 ---@field weather_times { rain: integer, thunder: integer, clear: integer } Read only: ticks left.
 ---@field spawn_rules { limits?: table<string, integer>, ticks_per?: table<string, integer>, allow_monsters?: boolean, allow_animals?: boolean } Only the categories a plugin changed.
+---@field tickable_block_entity_count integer Loaded block entities that run code every tick.
 local World = {}
 
 ---The biome id at a block, such as `minecraft:plains`.
@@ -1448,6 +1604,32 @@ function World:pois(x, y, z, radius, types, occupancy) end
 ---@param rules { limits?: table<string, integer>, ticks_per?: table<string, integer>, allow_monsters?: boolean, allow_animals?: boolean }
 function World:set_spawn_rules(rules) end
 
+---One random tick on that block; true when a block changed.
+---@param x integer
+---@param y integer
+---@param z integer
+---@return boolean
+function World:random_tick(x, y, z) end
+
+---Plants a named tree feature as the world generator would; with `apply` false nothing changes and the blocks it would set come back. Nil when it does not fit.
+---@param tree "oak"|"fancy_oak"|"swamp_oak"|"azalea"|"birch"|"super_birch"|"jungle_tree"|"jungle_bush"|"mega_jungle"|"spruce"|"pine"|"acacia"|"dark_oak"|"pale_oak"|"pale_oak_creaking"|"mega_spruce"|"mega_pine"|"mangrove"|"tall_mangrove"|"cherry"
+---@param x integer
+---@param y integer
+---@param z integer
+---@param apply? boolean
+---@return { x: integer, y: integer, z: integer, before: string, after: string }[]?
+function World:place_tree(tree, x, y, z, apply) end
+
+---`void_damage` (0 or 1), `void_damage_amount`, `void_damage_offset` or `simulation_distance`.
+---@param key string
+---@return number?
+function World:tunable(key) end
+
+---@param key string
+---@param value number
+---@return boolean
+function World:set_tunable(key, value) end
+
 ---@class basalt.Menu
 ---@field title string
 ---@field rows integer
@@ -1710,6 +1892,11 @@ function worlds.tags(registry) end
 ---@return { volume: number, pitch: number, break: string, step: string, place: string, hit: string, fall: string }?
 function worlds.block_sounds(state) end
 
+---The note block instrument over a state, such as `harp`, `basedrum`, `bell` or `pling`.
+---@param state integer
+---@return string?
+function worlds.block_instrument(state) end
+
 ---Whether the item (empty for a hand) is right for the drops of the state, and how fast it mines it.
 ---@param item string
 ---@param state integer
@@ -1745,7 +1932,7 @@ function settings.keys() end
 ---@return string?
 function settings.get(key) end
 
----Writable while running: `motd`, `max_players`, `idle_timeout` (minutes) and `gamemode`; false for anything else.
+---Writable while running: `motd`, `max_players`, `idle_timeout` (minutes), `gamemode`, `pause_when_empty_seconds`, `spawn_protection`, `pause_allowed`, `respawn_world` and `autosave`; false for anything else.
 ---@param key string
 ---@param value string|number|boolean
 ---@return boolean
@@ -1799,6 +1986,23 @@ function access.is_operator(who) end
 ---@param name string
 ---@return { uuid: string, name: string, first_seen: integer, last_seen: integer }?
 function access.known(name) end
+
+---A stored statistic counter of a player who may be offline, such as `minecraft:custom/minecraft:jump`.
+---@param uuid string
+---@param key string
+---@return integer
+function access.statistic(uuid, key) end
+
+---@param uuid string
+---@param key string
+---@param value integer
+---@return boolean
+function access.set_statistic(uuid, key, value) end
+
+---Where the player last died.
+---@param uuid string
+---@return { dimension: string, x: integer, y: integer, z: integer }?
+function access.last_death(uuid) end
 
 ---Scoreboards; a board is an integer handle and 0 is the server board. Text arguments are MiniMessage.
 ---@class basalt.scoreboards
@@ -1982,6 +2186,14 @@ function tick.stop_sprint() end
 
 ---@return { tps_1m: number, tps_5m: number, tps_15m: number, mean_tick_ms: number }
 function tick.pace() end
+
+---The last hundred tick durations in nanoseconds, not sorted by age.
+---@return integer[]
+function tick.times() end
+
+---True while nobody has been online for `pause_when_empty_seconds`.
+---@return boolean
+function tick.paused() end
 
 ---Links of the client's pause menu, read at login.
 ---@class basalt.server_links
@@ -3365,6 +3577,18 @@ local _ = {}
 
 ---@param message? string
 function _:cancel(message) end
+
+---@class basalt.event.entity_goal
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field key string
+---@field phase string
+---@field result boolean (the handler may change it)
+local _ = {}
 
 ---@class basalt.event.entity_potion_effect
 ---@field name string
@@ -4750,6 +4974,8 @@ local _ = {}
 ---@overload fun(event: "entity.add", filter: table, handler: fun(e: basalt.event.entity_add))
 ---@overload fun(event: "entity.target", handler: fun(e: basalt.event.entity_target))
 ---@overload fun(event: "entity.target", filter: table, handler: fun(e: basalt.event.entity_target))
+---@overload fun(event: "entity.goal", handler: fun(e: basalt.event.entity_goal))
+---@overload fun(event: "entity.goal", filter: table, handler: fun(e: basalt.event.entity_goal))
 ---@overload fun(event: "entity.potion_effect", handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.potion_effect", filter: table, handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.combust", handler: fun(e: basalt.event.entity_combust))
@@ -5083,6 +5309,8 @@ function on(event, handler) end
 ---@overload fun(event: "entity.add", filter: table, handler: fun(e: basalt.event.entity_add))
 ---@overload fun(event: "entity.target", handler: fun(e: basalt.event.entity_target))
 ---@overload fun(event: "entity.target", filter: table, handler: fun(e: basalt.event.entity_target))
+---@overload fun(event: "entity.goal", handler: fun(e: basalt.event.entity_goal))
+---@overload fun(event: "entity.goal", filter: table, handler: fun(e: basalt.event.entity_goal))
 ---@overload fun(event: "entity.potion_effect", handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.potion_effect", filter: table, handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.combust", handler: fun(e: basalt.event.entity_combust))
