@@ -30,16 +30,19 @@ EVENT_STRING = {"id", "payload", "world", "from_world", "to_world", "message", "
                 "rule", "address", "motd", "source", "projectile", "reason", "effect", "cooker", "result",
                 "difficulty", "from_difficulty", "line1", "line2", "line3", "line4", "title", "pages", "source_id",
                 "old_item", "new_item", "advancement", "pack_id", "status", "locale", "main_hand", "buffer",
-                "completions", "state", "species", "face", "source_block", "drops"}
+                "completions", "state", "species", "face", "source_block", "drops", "instrument", "blocks", "fuel", "results",
+                "affected", "event", "recipe", "statistic", "commands", "to_type", "outcome", "decoration"}
 EVENT_NUMBER = {"x", "y", "z", "from_x", "from_y", "from_z", "power", "amount", "time", "from_time", "duration",
                 "damage", "health", "igniter_x", "igniter_y", "igniter_z", "to_x", "to_y", "to_z", "duration_ms",
-                "remaining_ms"}
+                "remaining_ms", "strength", "vx", "vy", "vz", "old_size", "new_size", "old_x", "old_z", "new_x", "new_z"}
 EVENT_INTEGER = {"entity_id", "partner_id", "slot", "from_slot", "count", "food", "from_food", "level",
                  "from_level", "chunk_x", "chunk_z", "index", "button", "waves", "online", "max_players",
                  "players", "worlds", "plugins", "tick", "ticks", "amplifier", "skin_parts", "view_distance", "hook_id",
-                 "caught_id", "exp", "remover_id", "hit_id"}
+                 "caught_id", "exp", "remover_id", "hit_id", "note", "old_current", "new_current", "moisture", "total_time",
+                 "experience", "source_count", "holder_id", "previous", "value", "orb_id", "old_page", "new_page",
+                 "other_id", "block_x", "block_y", "block_z", "wave", "raiders", "leader_id"}
 EVENT_BOOLEAN = {"sneaking", "sprinting", "raining", "thundering", "from_raining", "from_thundering", "filling",
-                 "extending", "mounting", "entering", "generated", "broken", "won", "flying", "signing", "chat_colors", "silent", "drop_items"}
+                 "extending", "mounting", "entering", "generated", "broken", "won", "flying", "signing", "chat_colors", "silent", "drop_items", "raises", "buildable", "show_effect", "gliding", "swimming", "drop", "make_all"}
 
 
 EVENT_OVERRIDE = {("player.armor_change", "slot"): "string"}
@@ -62,6 +65,9 @@ def event_type(field, event=None):
 def read_events(source: Path):
     text = source.read_text()
     events = []
+    for m in re.finditer(r'HOOK_EVENT\(\w+,\s*"([^"]+)",\s*(true|false),\s*FIELDS\(([^)]*)\),\s*MUTABLE\(([^)]*)\)', text):
+        events.append((m.group(1), m.group(2) == "true", re.findall(r'"(\w+)"', m.group(3)),
+                       re.findall(r'"(\w+)"', m.group(4))))
     for m in re.finditer(r'PluginEventType type\{\s*"([^"]+)",\s*(true|false),\s*\{([^}]*)\}(?:,\s*\{([^}]*)\})?', text):
         events.append((m.group(1), m.group(2) == "true", re.findall(r'"(\w+)"', m.group(3)),
                        re.findall(r'"(\w+)"', m.group(4) or "")))
@@ -168,18 +174,18 @@ def render(rows, types=None, events=None):
 
 def main():
     args = sys.argv[1:]
-    events_source = None
+    events_sources = []
     types_file = None
-    if "--events" in args:
+    while "--events" in args:
         i = args.index("--events")
-        events_source = Path(args[i + 1])
+        events_sources.append(Path(args[i + 1]))
         del args[i : i + 2]
     if "--types" in args:
         i = args.index("--types")
         types_file = Path(args[i + 1])
         del args[i : i + 2]
     if len(args) != 2:
-        sys.exit("usage: generate-definitions.py <api-file> <target> [--types <file>] [--events <PluginEventTypes.cpp>]")
+        sys.exit("usage: generate-definitions.py <api-file> <target> [--types <file>] [--events <PluginEventTypes.cpp|PluginHookEvents.def>]...")
     rows = read(Path(args[0]))
     target = args[1]
     root = Path(__file__).resolve().parent.parent
@@ -187,7 +193,7 @@ def main():
         types_file = root / "types" / f"{target}.lua"
     destination = root / "definitions" / target / "basalt.lua"
     destination.parent.mkdir(parents=True, exist_ok=True)
-    events = read_events(events_source) if events_source else None
+    events = [e for source in events_sources for e in read_events(source)] or None
     destination.write_text(render(rows, types_file, events))
 
 

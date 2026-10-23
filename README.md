@@ -66,11 +66,12 @@ The names of an API live in Kiln, in `api/<target>.api`. DevTools turns that fil
 
 ```bash
 python3 scripts/generate-definitions.py ../Kiln/api/server.api server \
-    --events ../Server/server-plugins/src/PluginEventTypes.cpp
+    --events ../Server/server-plugins/src/PluginEventTypes.cpp \
+    --events ../Server/server-plugins/include/basalt/server/plugins/PluginHookEvents.def
 ```
 
 A name with a hand-written signature in `types/<target>.lua` (players, worlds, menus, forms, positions, items and the
-rest of the objects a plugin touches) keeps it; `--events` adds one class per event and the `on` and `watch` overloads
+rest of the objects a plugin touches) keeps it; `--events` (once per event source) adds one class per event and the `on` and `watch` overloads
 that go with it; any other name is declared with `...`. This writes `definitions/server/basalt.lua`. The extension adds `definitions/<target>/` to `Lua.workspace.library` in
 the workspace settings, so what the editor completes and what Kiln accepts come from the same list.
 

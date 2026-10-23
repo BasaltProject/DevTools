@@ -320,8 +320,9 @@ function Entity:nbt(path) end
 ---@return any
 function Entity:nbt_value(path) end
 
+---`uuid` takes a uuid string and saves it as four ints; `pos` takes `"x,y,z"` and saves three ints. Remove a key with `e:call("nbt_remove", path)`.
 ---@param path string
----@param type "bool"|"byte"|"short"|"int"|"long"|"float"|"double"|"string"
+---@param type "bool"|"byte"|"short"|"int"|"long"|"float"|"double"|"string"|"uuid"|"pos"
 ---@param value any
 ---@return boolean
 function Entity:nbt_set(path, type, value) end
@@ -1692,6 +1693,12 @@ function worlds.entity_types() end
 ---@return string[]
 function worlds.registry(registry) end
 
+---The data a client-synced registry holds for one entry, such as `damage_type`, `jukebox_song`, `instrument` or `wolf_variant`.
+---@param registry string
+---@param id string
+---@return string?
+function worlds.registry_data(registry, id) end
+
 ---The tags of `blocks`, `items`, `fluids` or `entity_types`: tag id to its member ids.
 ---@param registry string
 ---@return table<string, string[]>
@@ -2008,6 +2015,11 @@ function loot.tables() end
 ---@return { item: string, count: integer, components: string }[]
 function loot.roll(table, context) end
 
+---Rolls enchantments onto a stack as the `enchant_with_levels` loot function does; `options` is an enchantment id or a tag with a leading `#`.
+---@param spec { item: string, count?: integer, components?: string, levels?: integer, options?: string, seed?: integer, world?: string }
+---@return { item: string, count: integer, components: string }?
+function loot.enchant(spec) end
+
 ---@class basalt.maps
 maps = {}
 
@@ -2021,6 +2033,48 @@ function maps.create(world, center_x, center_z, scale) end
 ---@param id integer
 ---@return { dimension: string, scale: integer, center_x: integer, center_z: integer, locked: boolean }?
 function maps.info(id) end
+
+---Item components (SNBT) of a filled map pointing at the nearest of the structures; destinations are ids or tags with a leading `#`. Nil when none is found.
+---@param spec { world: string, x: number, y?: number, z: number, destination: string[], decoration?: string, zoom?: integer, radius?: integer, skip_existing?: boolean }
+---@return string?
+function maps.explorer(spec) end
+
+---Structure templates in the structure file format, given to and from Lua as SNBT.
+---@class basalt.structures
+structures = {}
+
+---@return string[]
+function structures.ids() end
+
+---@param id string
+---@return string?
+function structures.read(id) end
+
+---Keeps a template under the id; `to_disk` also saves it in the world's generated folder.
+---@param id string
+---@param snbt string
+---@param to_disk? boolean
+---@return boolean
+function structures.write(id, snbt, to_disk) end
+
+---@param id string
+---@param from_disk? boolean
+---@return boolean
+function structures.remove(id, from_disk) end
+
+---The generated file path an id is saved to.
+---@param id string
+---@return string
+function structures.file(id) end
+
+---@param box { world: string, x: integer, y: integer, z: integer, size_x: integer, size_y: integer, size_z: integer, entities?: boolean }
+---@return string?
+function structures.capture(box) end
+
+---@param snbt string
+---@param at { world: string, x: integer, y: integer, z: integer, rotation?: integer, mirror?: integer, integrity?: number, seed?: integer, entities?: boolean, palette?: integer }
+---@return boolean
+function structures.place(snbt, at) end
 
 ---@class basalt.log
 log = {}
