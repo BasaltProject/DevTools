@@ -28,17 +28,26 @@ def read(api: Path):
 EVENT_STRING = {"id", "payload", "world", "from_world", "to_world", "message", "command", "cause", "action", "block", "to_block", "item",
                 "main_item", "off_item", "hand", "entity_type", "gamemode", "from_gamemode", "kind", "direction",
                 "rule", "address", "motd", "source", "projectile", "reason", "effect", "cooker", "result",
-                "difficulty", "from_difficulty", "line1", "line2", "line3", "line4"}
+                "difficulty", "from_difficulty", "line1", "line2", "line3", "line4", "title", "pages", "source_id",
+                "old_item", "new_item", "advancement", "pack_id", "status", "locale", "main_hand", "buffer",
+                "completions", "state", "species", "face", "source_block", "drops"}
 EVENT_NUMBER = {"x", "y", "z", "from_x", "from_y", "from_z", "power", "amount", "time", "from_time", "duration",
-                "damage", "health"}
+                "damage", "health", "igniter_x", "igniter_y", "igniter_z", "to_x", "to_y", "to_z", "duration_ms",
+                "remaining_ms"}
 EVENT_INTEGER = {"entity_id", "partner_id", "slot", "from_slot", "count", "food", "from_food", "level",
                  "from_level", "chunk_x", "chunk_z", "index", "button", "waves", "online", "max_players",
-                 "players", "worlds", "plugins", "tick", "ticks", "amplifier"}
+                 "players", "worlds", "plugins", "tick", "ticks", "amplifier", "skin_parts", "view_distance", "hook_id",
+                 "caught_id", "exp", "remover_id", "hit_id"}
 EVENT_BOOLEAN = {"sneaking", "sprinting", "raining", "thundering", "from_raining", "from_thundering", "filling",
-                 "extending", "mounting", "entering", "generated", "broken", "won"}
+                 "extending", "mounting", "entering", "generated", "broken", "won", "flying", "signing", "chat_colors", "silent", "drop_items"}
 
 
-def event_type(field):
+EVENT_OVERRIDE = {("player.armor_change", "slot"): "string"}
+
+
+def event_type(field, event=None):
+    if (event, field) in EVENT_OVERRIDE:
+        return EVENT_OVERRIDE[(event, field)]
     if field.endswith(("_name", "_uuid")) or field in EVENT_STRING:
         return "string"
     if field in EVENT_NUMBER:
@@ -74,7 +83,7 @@ def render_events(events):
             out.append("---@field pos basalt.Position")
         for field in fields:
             note = " (the handler may change it)" if field in mutable else ""
-            out.append(f"---@field {field} {event_type(field)}{note}")
+            out.append(f"---@field {field} {event_type(field, name)}{note}")
         out.append("local _ = {}")
         if cancellable:
             out.append("")
