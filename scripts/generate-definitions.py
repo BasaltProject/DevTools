@@ -31,18 +31,18 @@ EVENT_STRING = {"id", "payload", "world", "from_world", "to_world", "message", "
                 "difficulty", "from_difficulty", "line1", "line2", "line3", "line4", "title", "pages", "source_id",
                 "old_item", "new_item", "advancement", "pack_id", "status", "locale", "main_hand", "buffer",
                 "completions", "state", "species", "face", "source_block", "drops", "instrument", "blocks", "fuel", "results",
-                "affected", "event", "key", "phase", "recipe", "statistic", "commands", "to_type", "outcome", "decoration"}
+                "affected", "event", "key", "phase", "recipe", "statistic", "commands", "to_type", "outcome", "decoration", "breeder"}
 EVENT_NUMBER = {"x", "y", "z", "from_x", "from_y", "from_z", "power", "amount", "time", "from_time", "duration",
                 "damage", "health", "igniter_x", "igniter_y", "igniter_z", "to_x", "to_y", "to_z", "duration_ms",
-                "remaining_ms", "strength", "vx", "vy", "vz", "old_size", "new_size", "old_x", "old_z", "new_x", "new_z"}
+                "remaining_ms", "strength", "vx", "vy", "vz", "from_yaw", "from_pitch", "yaw", "pitch", "old_size", "new_size", "old_x", "old_z", "new_x", "new_z"}
 EVENT_INTEGER = {"entity_id", "partner_id", "slot", "from_slot", "count", "food", "from_food", "level",
                  "from_level", "chunk_x", "chunk_z", "index", "button", "waves", "online", "max_players",
                  "players", "worlds", "plugins", "tick", "ticks", "amplifier", "skin_parts", "view_distance", "hook_id",
                  "caught_id", "exp", "remover_id", "hit_id", "note", "old_current", "new_current", "moisture", "total_time",
                  "experience", "source_count", "holder_id", "previous", "value", "orb_id", "old_page", "new_page",
-                 "other_id", "block_x", "block_y", "block_z", "wave", "raiders", "leader_id"}
+                 "other_id", "block_x", "block_y", "block_z", "wave", "raiders", "leader_id", "container_id"}
 EVENT_BOOLEAN = {"sneaking", "sprinting", "raining", "thundering", "from_raining", "from_thundering", "filling",
-                 "extending", "mounting", "entering", "generated", "broken", "won", "flying", "signing", "chat_colors", "silent", "drop_items", "raises", "buildable", "show_effect", "gliding", "swimming", "drop", "make_all"}
+                 "extending", "mounting", "entering", "generated", "broken", "won", "flying", "signing", "chat_colors", "silent", "drop_items", "raises", "buildable", "show_effect", "gliding", "swimming", "drop", "make_all", "insta_break", "fast_regen", "keep_inventory", "keep_level", "show_messages"}
 
 
 EVENT_OVERRIDE = {("player.armor_change", "slot"): "string", ("entity.goal", "result"): "boolean", ("entity.allied_check", "allied"): "boolean"}

@@ -145,6 +145,10 @@ function Inventory:clear() end
 ---@field burns_in_day boolean Catches fire in sunlight.
 ---@field despawn_in_peaceful integer -1 default, 0 never, 1 despawns in peaceful.
 ---@field nav_open_doors boolean The default ground navigation opens doors.
+---@field nav_pass_doors boolean Ground navigation may path through doors; false also stops door opening.
+---@field nav_can_float boolean Ground paths may cross water at the surface instead of routing around.
+---@field trading_player integer Read only: entity id of the player trading with a villager, -1 for none.
+---@field fuse integer Sulfur cube: ticks left on the lit fuse, -1 when it is not primed.
 ---@field bounce boolean A projectile that hits a block or entity reflects its velocity instead of landing.
 ---@field incendiary boolean An explosive or fireball sets fires; true for fireball and small_fireball.
 ---@field arrow_knockback integer Arrow punch in levels; reads the weapon's punch until set.
@@ -378,8 +382,17 @@ function Entity:remove_goals(flags) end
 function Entity:has_goal(key) end
 
 ---The selector as it stands.
----@return { key: string, priority: integer, running: boolean, plugin: boolean, flags: string }[]
+---@return { key: string, priority: integer, running: boolean, plugin: boolean, usable: boolean, flags: string }[]
 function Entity:goals() end
+
+---Sulfur cube: holds an explosive item, is alive and its fuse is not lit.
+---@return boolean
+function Entity:sulfur_can_explode() end
+
+---Sulfur cube: lights the fuse (a short random one when imminent); false when it cannot explode or `tnt_explodes` is off.
+---@param imminent boolean
+---@return boolean
+function Entity:sulfur_prime(imminent) end
 
 ---The projectile hits that entity on its next tick, through the code of a real hit.
 ---@param id integer
@@ -1270,8 +1283,36 @@ function World:drop_item(item, x, y, z, vx, vy, vz) end
 ---@param power number
 ---@param break_blocks? boolean
 ---@param source_id? integer
+---@param fire? boolean Sets fires, false by default.
 ---@return boolean
-function World:explode(x, y, z, power, break_blocks, source_id) end
+function World:explode(x, y, z, power, break_blocks, source_id, fire) end
+
+---The sculk shrieker at the block tries to shriek for that player.
+---@param x integer
+---@param y integer
+---@param z integer
+---@param player_uuid string
+---@return boolean
+function World:sculk_shriek(x, y, z, player_uuid) end
+
+---The sculk catalyst at the block blooms and starts a sculk charge at the source block.
+---@param x integer
+---@param y integer
+---@param z integer
+---@param source_x integer
+---@param source_y integer
+---@param source_z integer
+---@param charge integer
+---@return boolean
+function World:sculk_bloom(x, y, z, source_x, source_y, source_z, charge) end
+
+---`"spawn"` gives the heart a creaking and answers its uuid; `"resin"` spreads a clump and answers its `"x,y,z"`.
+---@param action "spawn"|"resin"
+---@param x integer
+---@param y integer
+---@param z integer
+---@return string?
+function World:creaking_heart(action, x, y, z) end
 
 ---The plugin-owned compound of the world as SNBT.
 ---@return string
@@ -1726,7 +1767,7 @@ function World:random_tick(x, y, z) end
 ---@return { x: integer, y: integer, z: integer, before: string, after: string }[]?
 function World:place_tree(tree, x, y, z, apply) end
 
----`void_damage` (0 or 1), `void_damage_amount`, `void_damage_offset`, `simulation_distance` or `hardcore` (0 or 1).
+---`void_damage` (0 or 1), `void_damage_amount`, `void_damage_offset`, `simulation_distance`, `hardcore` (0 or 1), `loot_refill` (0 or 1) or `loot_reloot_seconds` (-1 for never).
 ---@param key string
 ---@return number?
 function World:tunable(key) end
@@ -2073,6 +2114,9 @@ function recipes.clear() end
 
 ---Puts back the datapack's recipes and drops the added ones.
 function recipes.reset() end
+
+---Drops the brewing recipes a plugin added and brings back the ones the game ships.
+function recipes.reset_brewing() end
 
 ---Offline players, operators, the whitelist and bans.
 ---@class basalt.access
@@ -2584,6 +2628,11 @@ function _:cancel(message) end
 ---@field cause string
 ---@field message string (the handler may change it)
 ---@field silent boolean (the handler may change it)
+---@field drops string (the handler may change it)
+---@field exp integer (the handler may change it)
+---@field keep_inventory boolean (the handler may change it)
+---@field keep_level boolean (the handler may change it)
+---@field show_messages boolean
 local _ = {}
 
 ---@class basalt.event.player_move
@@ -2773,6 +2822,7 @@ local _ = {}
 ---@field world string
 ---@field gamemode string
 ---@field from_gamemode string
+---@field cause string
 local _ = {}
 
 ---@param message? string
@@ -2787,6 +2837,7 @@ function _:cancel(message) end
 ---@field world string
 ---@field food integer (the handler may change it)
 ---@field from_food integer
+---@field item string
 local _ = {}
 
 ---@param message? string
@@ -2847,6 +2898,7 @@ function _:cancel(message) end
 ---@field z number
 ---@field item string
 ---@field filling boolean
+---@field face string
 local _ = {}
 
 ---@param message? string
@@ -2983,6 +3035,7 @@ function _:cancel(message) end
 ---@field y number
 ---@field z number
 ---@field item string
+---@field face string
 local _ = {}
 
 ---@param message? string
@@ -3177,6 +3230,8 @@ function _:cancel(message) end
 ---@field entity_type string
 ---@field world string
 ---@field partner_id integer
+---@field breeder string
+---@field experience integer (the handler may change it)
 local _ = {}
 
 ---@param message? string
@@ -3207,6 +3262,7 @@ function _:cancel(message) end
 ---@field world string
 ---@field amount number (the handler may change it)
 ---@field cause string
+---@field fast_regen boolean
 local _ = {}
 
 ---@param message? string
@@ -3229,11 +3285,13 @@ function _:cancel(message) end
 ---@class basalt.event.item_spawn
 ---@field name string
 ---@field cancelled boolean
+---@field entity basalt.Entity?
 ---@field pos basalt.Position
 ---@field world string
 ---@field x number
 ---@field y number
 ---@field z number
+---@field entity_id integer
 ---@field item string
 ---@field count integer
 ---@field cause string
@@ -3363,9 +3421,13 @@ function _:cancel(message) end
 ---@field name string
 ---@field cancelled boolean
 ---@field player basalt.Player?
+---@field pos basalt.Position
 ---@field player_name string
 ---@field player_uuid string
 ---@field world string
+---@field x number
+---@field y number
+---@field z number
 ---@field item string
 ---@field bookshelves any
 ---@field offers any (the handler may change it)
@@ -3378,9 +3440,13 @@ function _:cancel(message) end
 ---@field name string
 ---@field cancelled boolean
 ---@field player basalt.Player?
+---@field pos basalt.Position
 ---@field player_name string
 ---@field player_uuid string
 ---@field world string
+---@field x number
+---@field y number
+---@field z number
 ---@field item string
 ---@field button integer
 ---@field cost any (the handler may change it)
@@ -3487,6 +3553,7 @@ function _:cancel(message) end
 ---@field player_uuid string
 ---@field world string
 ---@field entity_id integer
+---@field container_id integer
 ---@field index integer
 ---@field result string
 local _ = {}
@@ -3506,6 +3573,8 @@ function _:cancel(message) end
 ---@field y number
 ---@field z number
 ---@field block string
+---@field face string
+---@field insta_break boolean
 local _ = {}
 
 ---@param message? string
@@ -4931,6 +5000,29 @@ function _:cancel(message) end
 ---@field leader_id integer
 local _ = {}
 
+---@class basalt.event.entity_move
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field from_x number
+---@field from_y number
+---@field from_z number
+---@field x number
+---@field y number
+---@field z number
+---@field from_yaw number
+---@field from_pitch number
+---@field yaw number
+---@field pitch number
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
 ---@overload fun(event: "player.join", handler: fun(e: basalt.event.player_join))
 ---@overload fun(event: "player.join", filter: table, handler: fun(e: basalt.event.player_join))
 ---@overload fun(event: "player.quit", handler: fun(e: basalt.event.player_quit))
@@ -5263,6 +5355,8 @@ local _ = {}
 ---@overload fun(event: "raid.trigger", filter: table, handler: fun(e: basalt.event.raid_trigger))
 ---@overload fun(event: "raid.wave", handler: fun(e: basalt.event.raid_wave))
 ---@overload fun(event: "raid.wave", filter: table, handler: fun(e: basalt.event.raid_wave))
+---@overload fun(event: "entity.move", handler: fun(e: basalt.event.entity_move))
+---@overload fun(event: "entity.move", filter: table, handler: fun(e: basalt.event.entity_move))
 ---@overload fun(event: string, handler: fun(e: table))
 ---@param event string
 ---@param handler fun(e: table)
@@ -5600,6 +5694,8 @@ function on(event, handler) end
 ---@overload fun(event: "raid.trigger", filter: table, handler: fun(e: basalt.event.raid_trigger))
 ---@overload fun(event: "raid.wave", handler: fun(e: basalt.event.raid_wave))
 ---@overload fun(event: "raid.wave", filter: table, handler: fun(e: basalt.event.raid_wave))
+---@overload fun(event: "entity.move", handler: fun(e: basalt.event.entity_move))
+---@overload fun(event: "entity.move", filter: table, handler: fun(e: basalt.event.entity_move))
 ---@overload fun(event: string, handler: fun(e: table))
 ---@param event string
 ---@param handler fun(e: table)
