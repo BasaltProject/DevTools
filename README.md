@@ -81,14 +81,19 @@ the workspace settings, so what the editor completes and what Kiln accepts come 
 2. Run the generator for it, as above, and commit the new `definitions/<target>/basalt.lua`.
 3. Add the target to the `basalt.target` values in `package.json`.
 
-## Building
+## Download
+
+Every commit to `main` publishes a release, `<minecraft>.<n>` such as `26.3.4`, on the
+[releases page](https://github.com/BasaltProject/DevTools/releases), with `SHA256SUMS`. Take
+`Basalt-DevTools-VSCode-<version>.vsix` and install it with `Extensions: Install from VSIX`, or
+`code --install-extension <file>`. The extension also needs [Kiln](https://github.com/BasaltProject/Kiln/releases).
+
+To build the package yourself:
 
 ```bash
 npm install -g @vscode/vsce
 vsce package
 ```
-
-This produces `basalt-devtools-<version>.vsix`, which VS Code installs from `Extensions: Install from VSIX`.
 
 ## JetBrains
 
@@ -97,11 +102,12 @@ Basalt tool window (double click opens the line), Kiln runs again when a Lua fil
 `Sync API Definitions` copies the `---@meta` definitions of the target into `.basalt/api/` so a Lua plugin for the IDE
 completes them. The target, the Kiln path and the save check are under `Settings | Tools | Basalt`.
 
+The release carries `Basalt-DevTools-IntelliJ-<version>.zip`; install it with
+`Settings | Plugins | Install Plugin from Disk`. To build it yourself:
+
 ```bash
 cd intellij && ./gradlew buildPlugin   # build/distributions/basalt-devtools-intellij-<version>.zip
 ```
-
-Install the zip with `Settings | Plugins | Install Plugin from Disk`.
 
 ## License
 

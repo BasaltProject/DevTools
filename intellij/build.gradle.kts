@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.basaltmc"
-version = "26.3.0"
+version = providers.gradleProperty("pluginVersion").getOrElse("26.3.0")
 
 // The IDE runs on Java 21, so what is built for it targets 21 whichever JDK builds it.
 kotlin {

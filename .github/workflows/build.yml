@@ -1,0 +1,108 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md']
+  pull_request:
+    paths-ignore: ['**.md']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Plan the version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+              .github/scripts/plan-version.sh release package.json
+          else
+              .github/scripts/plan-version.sh ci package.json
+          fi
+
+  vscode:
+    needs: plan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check the extension script
+        run: node --check extension.js
+
+      - name: Package the extension
+        run: |
+          mkdir dist
+          npx --yes @vscode/vsce@3.6.0 package "${{ needs.plan.outputs.version }}" --no-git-tag-version --no-update-package-json \
+              --out "dist/Basalt-DevTools-VSCode-${{ needs.plan.outputs.version }}.vsix"
+
+      - name: Upload the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: devtools-vscode
+          path: dist/
+
+  intellij:
+    needs: plan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the plugin
+        working-directory: intellij
+        run: ./gradlew buildPlugin -PpluginVersion=${{ needs.plan.outputs.version }}
+
+      - name: Name the package
+        run: |
+          mkdir dist
+          cp intellij/build/distributions/basalt-devtools-intellij-${{ needs.plan.outputs.version }}.zip \
+              "dist/Basalt-DevTools-IntelliJ-${{ needs.plan.outputs.version }}.zip"
+
+      - name: Upload the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: devtools-intellij
+          path: dist/
+
+  release:
+    if: ${{ github.event_name == 'push' }}
+    needs: [plan, vscode, intellij]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: devtools-*
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/publish-release.sh "${{ needs.plan.outputs.version }}" "$GITHUB_SHA" artifacts
