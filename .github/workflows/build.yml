@@ -49,6 +49,11 @@ jobs:
 
       - name: Package the extension
         run: |
+          python3 - <<'PY'
+          import re
+          text = open("README.md").read()
+          open("README.md", "w").write(re.sub(r"<p align=\"center\">(?:(?!</p>).)*\.svg(?:(?!</p>).)*</p>\n*", "", text, count=1, flags=re.S))
+          PY
           mkdir dist
           npx --yes @vscode/vsce@3.6.0 package "${{ needs.plan.outputs.version }}" --no-git-tag-version --no-update-package-json \
               --out "dist/Basalt-DevTools-VSCode-${{ needs.plan.outputs.version }}.vsix"
