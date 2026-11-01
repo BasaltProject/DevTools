@@ -17,6 +17,7 @@ concurrency:
 jobs:
   plan:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -37,6 +38,7 @@ jobs:
   vscode:
     needs: plan
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -67,6 +69,7 @@ jobs:
   intellij:
     needs: plan
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -97,6 +100,7 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     needs: [plan, vscode, intellij]
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     permissions:
       contents: write
     steps:
