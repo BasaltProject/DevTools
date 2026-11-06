@@ -360,6 +360,18 @@ function Entity:stop_path() end
 ---@return boolean
 function Entity:has_path() end
 
+---The block nodes the native pathfinder would walk to a point, as flat x, y, z triples; empty when it cannot reach; nothing starts moving.
+---@overload fun(self: basalt.Entity, x: number, y: number, z: number): string[]
+---@param x number
+---@param y number
+---@param z number
+---@return string[] nodes
+function Entity:find_path(x, y, z) end
+
+---The nodes of the path the mob is walking, as flat x, y, z triples; empty without one.
+---@return string[] nodes
+function Entity:path_nodes() end
+
 ---Adds a goal a plugin owns next to the vanilla ones; `flags` is a comma list of `move look jump target`.
 ---@param key string
 ---@param priority integer
@@ -384,6 +396,126 @@ function Entity:has_goal(key) end
 ---The selector as it stands.
 ---@return { key: string, priority: integer, running: boolean, plugin: boolean, usable: boolean, flags: string }[]
 function Entity:goals() end
+
+---Brain memory value: a boolean, number or string; `{ "entity", id }`, `{ "position", dimension, x, y, z }`, `{ "walk", x, y, z, entity, speed, close }` or `{ "list", "b|1", "entity|12", ... }`.
+---@alias BrainValue boolean|number|string|string[]
+
+---Gives the mob a brain (or reuses it) and registers memory keys such as `walk_target` or `home`.
+---@param ... string|string[]
+---@return boolean
+function Entity:brain_register(...) end
+
+---True when the mob has a brain.
+---@return boolean
+function Entity:brain_has() end
+
+---Drops the brain.
+---@return boolean
+function Entity:brain_clear() end
+
+---The memory value, or nil when empty or unregistered.
+---@param key string
+---@return BrainValue?
+function Entity:brain_memory(key) end
+
+---Sets a registered memory, forever or for `ticks`; false when the key is not registered.
+---@param key string
+---@param value BrainValue
+---@param ticks? integer
+---@return boolean
+function Entity:brain_set_memory(key, value, ticks) end
+
+---@param key string
+---@return boolean
+function Entity:brain_erase_memory(key) end
+
+---Empties every memory.
+---@return boolean
+function Entity:brain_clear_memories() end
+
+---@param key string
+---@return boolean
+function Entity:brain_has_memory(key) end
+
+---`status` is `present`, `absent` or `registered`.
+---@param key string
+---@param status string
+---@return boolean
+function Entity:brain_check_memory(key, status) end
+
+---Ticks left before the memory expires: -1 when it never does, nil when empty.
+---@param key string
+---@return integer?
+function Entity:brain_memory_ttl(key) end
+
+---Every registered memory.
+---@return { key: string, present: string, ttl: string }[]
+function Entity:brain_memories() end
+
+---Defines an activity; requirements are `key=present|absent|registered`, and the memories listed are erased when it stops.
+---@param name string
+---@param requirements? string[]
+---@param erase_when_stopped? string[]
+---@return boolean
+function Entity:brain_define_activity(name, requirements, erase_when_stopped) end
+
+---Names a behavior row of an activity (lower priority runs first); a plugin answers it in the `entity.behavior` event, phases `can_use`, `start`, `can_continue`, `tick` and `stop`, with at most 24 calls per mob per tick.
+---@param activity string
+---@param priority integer
+---@param key string
+---@return boolean
+function Entity:brain_add_behavior(activity, priority, key) end
+
+---@return boolean
+function Entity:brain_clear_behaviors() end
+
+---@return { activity: string, priority: string, key: string }[]
+function Entity:brain_behaviors() end
+
+---Activities that are always active next to the chosen one (`core` by default).
+---@param ... string|string[]
+---@return boolean
+function Entity:brain_set_core(...) end
+
+---@param name string
+---@return boolean
+function Entity:brain_set_default(name) end
+
+---`mode` is `if_possible` (default: falls back to the default activity), `force` or `default`.
+---@param name string
+---@param mode? string
+---@return boolean
+function Entity:brain_set_activity(name, mode) end
+
+---Picks the first activity whose requirements hold.
+---@param ... string|string[]
+---@return boolean
+function Entity:brain_first_valid(...) end
+
+---Active activities, core ones included.
+---@return string[]
+function Entity:brain_active() end
+
+---@return string?
+function Entity:brain_active_non_core() end
+
+---@param name string
+---@return boolean
+function Entity:brain_is_active(name) end
+
+---`villager` follows the day schedule of villagers; empty clears it.
+---@param name string
+---@return boolean
+function Entity:brain_schedule(name) end
+
+---Sensors that fill memories: `nearest_living_entities` (`mobs`, `visible_mobs`) and `nearest_players`, as `name` or `name@range`.
+---@param ... string|string[]
+---@return boolean
+function Entity:brain_sensors(...) end
+
+---Expires memories and moves the schedule once for this game tick; the server does it every tick anyway.
+---@return boolean
+function Entity:brain_tick() end
 
 ---Sulfur cube: holds an explosive item, is alive and its fuse is not lit.
 ---@return boolean
@@ -627,6 +759,157 @@ function Player:give_exp(points) end
 ---@param n integer
 ---@return true
 function Player:give_levels(n) end
+
+---Does what a client packet that uses the held item would do.
+---@param hand integer 0 for the main hand, 1 for the off hand
+---@param yaw number
+---@param pitch number
+---@param sequence integer
+---@return boolean accepted
+function Player:receive_use_item(hand, yaw, pitch, sequence) end
+
+---Does what a client packet that uses the held item on a block would do.
+---@param hand integer 0 for the main hand, 1 for the off hand
+---@param x integer
+---@param y integer
+---@param z integer
+---@param face integer 0 down, 1 up, 2 north, 3 south, 4 west, 5 east
+---@param cursor_x number
+---@param cursor_y number
+---@param cursor_z number
+---@param inside boolean
+---@param sequence integer
+---@return boolean accepted
+function Player:receive_use_item_on(hand, x, y, z, face, cursor_x, cursor_y, cursor_z, inside, sequence) end
+
+---Does what a container click packet would do.
+---@param container integer
+---@param state integer
+---@param slot integer
+---@param button integer
+---@param mode integer 0 pickup, 1 quick move, 2 swap, 3 clone, 4 throw, 5 quick craft, 6 pickup all
+---@param carried boolean
+---@return boolean accepted
+function Player:receive_container_click(container, state, slot, button, mode, carried) end
+
+---Does what an interact packet on an entity would do.
+---@param entity integer
+---@param hand integer
+---@param x number
+---@param y number
+---@param z number
+---@param sneaking boolean
+---@return boolean accepted
+function Player:receive_interact(entity, hand, x, y, z, sneaking) end
+
+---Does what an attack packet on an entity would do.
+---@param entity integer
+---@return boolean accepted
+function Player:receive_attack(entity) end
+
+---Delivers a plugin channel payload as if the client had sent it.
+---@param channel string
+---@param data string
+---@return boolean accepted
+function Player:receive_custom_payload(channel, data) end
+
+---Runs a command as if the client had sent it in chat.
+---@param command string
+---@return boolean accepted
+function Player:receive_chat_command(command) end
+
+---Does what a movement packet with position and rotation would do.
+---@param x number
+---@param y number
+---@param z number
+---@param yaw number
+---@param pitch number
+---@param on_ground boolean
+---@return boolean accepted
+function Player:receive_move(x, y, z, yaw, pitch, on_ground) end
+
+---Does what picking the block at a position would do.
+---@param x integer
+---@param y integer
+---@param z integer
+---@param include_data boolean
+---@return boolean accepted
+function Player:receive_pick_block(x, y, z, include_data) end
+
+---Does what picking an entity would do.
+---@param entity integer
+---@param include_data boolean
+---@return boolean accepted
+function Player:receive_pick_entity(entity, include_data) end
+
+---Does what a recipe placement request would do.
+---@param container integer
+---@param recipe integer
+---@param all boolean
+---@return boolean accepted
+function Player:receive_place_recipe(container, recipe, all) end
+
+---Does what a creative inventory slot update would do.
+---@param slot integer
+---@param item string item as NBT bytes
+---@return boolean accepted
+function Player:receive_creative_slot(slot, item) end
+
+---Does what a sign editor update would do.
+---@param x integer
+---@param y integer
+---@param z integer
+---@param front boolean
+---@param line1 string
+---@param line2 string
+---@param line3 string
+---@param line4 string
+---@return boolean accepted
+function Player:receive_sign_update(x, y, z, front, line1, line2, line3, line4) end
+
+---Does what an anvil rename would do.
+---@param name string
+---@return boolean accepted
+function Player:receive_rename_item(name) end
+
+---Does what a beacon confirmation would do.
+---@param primary? integer
+---@param secondary? integer
+---@return boolean accepted
+function Player:receive_beacon(primary, secondary) end
+
+---Does what a trade selection would do.
+---@param index integer
+---@return boolean accepted
+function Player:receive_select_trade(index) end
+
+---Does what a container button click would do.
+---@param container integer
+---@param button integer
+---@return boolean accepted
+function Player:receive_container_button(container, button) end
+
+---Does what a container close packet would do.
+---@param container integer
+---@return boolean accepted
+function Player:receive_container_close(container) end
+
+---Does what a hotbar slot selection would do.
+---@param slot integer
+---@return boolean accepted
+function Player:receive_held_slot(slot) end
+
+---Does what an unsigned chat message from the client would do.
+---@param message string
+---@return boolean accepted
+function Player:receive_chat(message) end
+
+---Does what a book edit packet would do.
+---@param slot integer
+---@param pages string[]
+---@param title? string
+---@return boolean accepted
+function Player:receive_edit_book(slot, pages, title) end
 
 ---Resends the real health to the client.
 ---@return true
@@ -1306,6 +1589,13 @@ function World:sculk_shriek(x, y, z, player_uuid) end
 ---@return boolean
 function World:sculk_bloom(x, y, z, source_x, source_y, source_z, charge) end
 
+---Ticks the cursors of the sculk catalyst at the block once; false when there is nothing to spread.
+---@param x integer
+---@param y integer
+---@param z integer
+---@return boolean
+function World:sculk_update(x, y, z) end
+
 ---`"spawn"` gives the heart a creaking and answers its uuid; `"resin"` spreads a clump and answers its `"x,y,z"`.
 ---@param action "spawn"|"resin"
 ---@param x integer
@@ -1438,6 +1728,12 @@ function World:update_shapes(positions, states) end
 ---@param state integer
 ---@return integer state
 function World:valid_state(where, state) end
+
+---Whether a tick of the block at a position is already booked.
+---@overload fun(self: basalt.World, x: integer, y: integer, z: integer): boolean
+---@param where basalt.Where
+---@return boolean booked
+function World:has_tick(where) end
 
 ---Books a tick of the block at a position, `delay` ticks away, or of the fluid in it when `kind` is `"fluid"`.
 ---@overload fun(self: basalt.World, x: integer, y: integer, z: integer, delay: integer, kind?: "block"|"fluid"): boolean
@@ -1688,15 +1984,56 @@ function World:set_weather_times(times) end
 ---@return integer
 function World:inhabited_time(cx, cz, set) end
 
+---Draws from the world's named random sequence, the one `/random` uses; `reset` and `clear` restart one or all.
+---@param id string
+---@param kind? "int"|"bound"|"long"|"bool"|"float"|"double"|"gaussian"|"reset"|"clear"
+---@param bound? integer
+---@return number|boolean|nil
+function World:random_sequence(id, kind, bound) end
+
 ---`bounds` is `{minx, miny, minz, maxx, maxy, maxz}`.
 ---@param cx integer
 ---@param cz integer
 ---@return { structure: string, chunk_x: integer, chunk_z: integer, bounds: integer[], pieces: table[] }[]
 function World:structures(cx, cz) end
 
----Each raid is `{id, started, ticks_active, omen_level, status, groups_spawned, total_groups, total_health, center, heroes, raiders}`.
+---Whether the world's difficulty is locked.
+---@type boolean
+World.difficulty_locked = false
+
+---Sets the difficulty (`"peaceful"`, `"easy"`, `"normal"` or `"hard"`); false when locked or unknown.
+---@param difficulty string
+---@return boolean
+function World:set_difficulty(difficulty) end
+
+---Locks or unlocks the difficulty.
+---@param locked? boolean
+function World:set_difficulty_locked(locked) end
+
+---Each raid is `{id, started, ticks_active, omen_level, status, groups_spawned, total_groups, total_health, center, heroes, raiders, leaders}`, `leaders` mapping a wave to its leader's entity id.
 ---@return table[]
 function World:raids() end
+
+---Acts on a raid: `"stop"`, `"join"` (`entity`, `wave`), `"set_leader"` (`wave`, `entity`), `"remove_leader"` (`wave`) or `"create"` (`player`, `x`, `y`, `z`, `amplifier`, with no raid id). Answers the raid id, or nil.
+---@param id? integer
+---@param action "stop"|"join"|"set_leader"|"remove_leader"|"create"
+---@param fields? { entity?: integer, wave?: integer, player?: integer, x?: integer, y?: integer, z?: integer, amplifier?: integer }
+---@return integer? id
+function World:raid_control(id, action, fields) end
+
+---The world's clock: total ticks, rate, whether it is paused and the time markers (name to tick of the day).
+---@return { ticks: integer, rate: number, paused: boolean, markers: table<string, integer> }
+function World:clock() end
+
+---Sets the clock rate (0.00001 to 1000) and tells the clients; false when out of range.
+---@param rate number
+---@return boolean
+function World:set_clock_rate(rate) end
+
+---Moves the clock to the next time of a time marker such as `"noon"`.
+---@param marker string
+---@return "none"|"not_moved"|"moved"
+function World:move_to_time_marker(marker) end
 
 ---@param id integer
 ---@param fields { omen_level?: integer, total_groups?: integer }
@@ -1708,6 +2045,20 @@ function World:set_raid(id, fields) end
 ---@param z integer
 ---@return { fluid: "empty"|"water"|"lava", source: boolean, level: integer, falling: boolean }
 function World:fluid(x, y, z) end
+
+---The multi-noise climate parameters at a block position, or nil when the world has no multi-noise biome source.
+---@param x integer
+---@param y integer
+---@param z integer
+---@return { temperature: number, humidity: number, continentalness: number, erosion: number, depth: number, weirdness: number }|nil
+function World:climate(x, y, z) end
+
+---The pyramid levels under a beacon and the colour (rgb) and height of each beam section above it, bottom up.
+---@param x integer
+---@param y integer
+---@param z integer
+---@return { levels: integer, sections: { color: integer, height: integer }[] }
+function World:beacon_scan(x, y, z) end
 
 ---Where a strike near the column lands, a rod first.
 ---@param x integer
@@ -1766,6 +2117,20 @@ function World:random_tick(x, y, z) end
 ---@param apply? boolean
 ---@return { x: integer, y: integer, z: integer, before: string, after: string }[]?
 function World:place_tree(tree, x, y, z, apply) end
+
+---Runs a world generator placed feature (`minecraft:ore_coal_upper`, a flower patch, a tree) at a position as the generator would; blocks outside the chunk are clipped. Nil for an unknown id.
+---@param feature string
+---@param x integer
+---@param y integer
+---@param z integer
+---@param seed? integer
+---@param apply? boolean false puts the blocks back and only reports what the feature would write; true by default
+---@return { x: integer, y: integer, z: integer, before: integer, after: integer }[]?
+function World:place_feature(feature, x, y, z, seed, apply) end
+
+---The placed feature ids `place_feature` accepts.
+---@return string[]
+function World:feature_ids() end
 
 ---`void_damage` (0 or 1), `void_damage_amount`, `void_damage_offset`, `simulation_distance`, `hardcore` (0 or 1), `loot_refill` (0 or 1) or `loot_reloot_seconds` (-1 for never).
 ---@param key string
@@ -1916,6 +2281,163 @@ function service(name) end
 ---@return integer
 function emit(name, payload) end
 
+---@alias basalt.Point number[]
+---@alias basalt.BoxFields { min_x: number, min_y: number, min_z: number, max_x: number, max_y: number, max_z: number }
+---@alias basalt.HitCandidate { min_x: number, min_y: number, min_z: number, max_x: number, max_y: number, max_z: number, pick_radius?: number, pick_from_inside?: boolean, root?: integer }
+
+---@class basalt.breeding
+breeding = {}
+
+---Vanilla horse offspring attribute from two parent values, the attribute range and three random draws in [0, 1).
+---@param parent_a number
+---@param parent_b number
+---@param min number
+---@param max number
+---@param first number
+---@param second number
+---@param third number
+---@return number
+function breeding.offspring_attribute(parent_a, parent_b, min, max, first, second, third) end
+
+---@class basalt.enchantments
+enchantments = {}
+
+---The value of an enchantment level based number (a bare number or a table with `type`: constant, linear, levels_squared, clamped, fraction, exponent or lookup) at a level.
+---@param spec number|table
+---@param level integer
+---@return number
+function enchantments.level_value(spec, level) end
+
+---@class basalt.combat
+combat = {}
+
+---Damage left after armor and toughness, with the bonus fraction a weapon can add to the armor's share.
+---@param damage number
+---@param armor number
+---@param toughness number
+---@param fraction_add? number
+---@return number
+function combat.after_armor(damage, armor, toughness, fraction_add) end
+
+---Damage left after enchantment protection points (capped at 20).
+---@param damage number
+---@param protection number
+---@return number
+function combat.after_protection(damage, protection) end
+
+---Damage left under the Resistance effect of an amplifier (0 is level one).
+---@param damage number
+---@param amplifier integer
+---@return number
+function combat.after_resistance(damage, amplifier) end
+
+---Damage after the difficulty scales it (`peaceful`, `easy`, `normal`, `hard`).
+---@param damage number
+---@param difficulty string
+---@return number
+function combat.after_difficulty(damage, difficulty) end
+
+---Splits a hit between the absorption hearts and health: the health that is lost and the absorption that is left.
+---@param damage number
+---@param absorption number
+---@return number health
+---@return number absorption
+function combat.absorb(damage, absorption) end
+
+---The fall damage for a distance and the safe distance (3 by default).
+---@param distance number
+---@param safe? number
+---@return integer
+function combat.fall_damage(distance, safe) end
+
+---Whether a damage type's scaling (`never`, `always` or `when_caused_by_living_non_player`) makes the difficulty change the damage.
+---@param scaling string
+---@param caused_by_living_non_player? boolean
+---@return boolean
+function combat.scales_with_difficulty(scaling, caused_by_living_non_player) end
+
+---@class basalt.physics
+physics = {}
+
+---The first point of the segment from a point to another that is inside the box, or nil when it misses.
+---@param box basalt.BoxFields
+---@param from basalt.Point
+---@param to basalt.Point
+---@return basalt.Point?
+function physics.clip(box, from, to) end
+
+---Sweeps a box through the colliders (boxes with an optional `shape` number, the exit happens between shapes) and returns the movement that is left: Y first, then the longer of X and Z.
+---@param colliders basalt.HitCandidate[]
+---@param box basalt.BoxFields
+---@param movement basalt.Point
+---@return basalt.Point
+function physics.collide(colliders, box, movement) end
+
+---The movement of a step up over the colliders: the first rise, shortest first, whose horizontal reach beats `reach_squared`; nil when none does.
+---@param colliders basalt.HitCandidate[]
+---@param grounded basalt.BoxFields
+---@param grounded_offset_y number
+---@param movement basalt.Point
+---@param max_up_step number
+---@param reach_squared number
+---@return basalt.Point?
+function physics.step_up(colliders, grounded, grounded_offset_y, movement, max_up_step, reach_squared) end
+
+---The projectile rotation that turns towards the movement: x_rot_o, y_rot_o, x_rot and y_rot, or nil at rest.
+---@param motion basalt.Point
+---@param x_rot_o number
+---@param y_rot_o number
+---@param x_rot number
+---@param y_rot number
+---@param speed number
+---@return { x_rot_o: number, y_rot_o: number, x_rot: number, y_rot: number }?
+function physics.rotate_towards_movement(motion, x_rot_o, y_rot_o, x_rot, y_rot, speed) end
+
+---The closest candidate that a projectile segment hits once the boxes grow by the margin: its 1-based index and the point, or nil.
+---@param candidates basalt.HitCandidate[]
+---@param from basalt.Point
+---@param to basalt.Point
+---@param margin number
+---@return integer? index
+---@return basalt.Point? point
+function physics.closest_hit(candidates, from, to, margin) end
+
+---The entity a segment picks, which prefers entities of another vehicle than the root one: its 1-based index and the point, or nil.
+---@param candidates basalt.HitCandidate[]
+---@param root integer
+---@param from basalt.Point
+---@param to basalt.Point
+---@param max number
+---@return integer? index
+---@return basalt.Point? point
+function physics.picked_hit(candidates, root, from, to, max) end
+
+---The margin an entity at that age adds to the box a projectile can hit.
+---@param tick_count integer
+---@return number
+function physics.projectile_margin(tick_count) end
+
+---The box a shulker peeks into, for a size, the direction ordinal (down, up, north, south, west, east), the progress range and the position.
+---@param size number
+---@param direction integer
+---@param progress_from number
+---@param progress_to number
+---@param position basalt.Point
+---@return basalt.BoxFields
+function physics.shulker_box(size, direction, progress_from, progress_to, position) end
+
+---The share of the spin a leashed entity keeps each tick.
+---@param on_ground boolean
+---@param block_friction? number
+---@param in_liquid? boolean
+---@return number
+function physics.leash_angular_friction(on_ground, block_friction, in_liquid) end
+
+---The pull of a taut leash on the entity: the torque and the push to add to its movement, or nil when it is slack. Bodies are `{ position, width, height, yaw }` and the motions are points.
+---@param spec { self: { position: basalt.Point, width: number, height: number, yaw: number }, holder: { position: basalt.Point, width: number, height: number, yaw: number }, quad?: boolean, slack?: number, self_motion: basalt.Point, holder_motion: basalt.Point, known_motion: basalt.Point }
+---@return { torque: number, push: basalt.Point }?
+function physics.leash_pull(spec) end
+
 ---@class basalt.players
 players = {}
 
@@ -1988,6 +2510,11 @@ function worlds.block_hardness(block) end
 ---@return { friction: number, speed_factor: number, jump_factor: number, push_reaction: string, map_color: integer, ignite_odds: number, burn_odds: number }?
 function worlds.block_info(id) end
 
+---The collision boxes of a block state as a flat list, six numbers per box (min corner, then max corner) in blocks.
+---@param id integer
+---@return number[]
+function worlds.block_shape(id) end
+
 ---Which blocks own a block entity: block id to the id of its block entity type.
 ---@return table<string, string>
 function worlds.block_entity_types() end
@@ -2013,6 +2540,11 @@ function worlds.fix_name(kind, text, from_version) end
 ---The item ids, in registry order.
 ---@return string[]
 function worlds.items() end
+
+---The attributes a new living entity of the type starts with, as attribute id to base value. Empty for non-living types.
+---@param type string
+---@return table<string, number>
+function worlds.entity_attributes(type) end
 
 ---The entity type ids.
 ---@return string[]
@@ -2117,6 +2649,68 @@ function recipes.reset() end
 
 ---Drops the brewing recipes a plugin added and brings back the ones the game ships.
 function recipes.reset_brewing() end
+
+---A recipe as SNBT mirroring its fields, or nil.
+---@param id string
+---@return string?
+function recipes.get(id) end
+
+---What a crafting grid makes: `items` is SNBT `{items:[{id:"minecraft:stick",count:1},{}...]}` row by row. Returns SNBT `{recipe, result, remaining}`, or nil when no recipe fits.
+---@param width integer
+---@param height integer
+---@param items string
+---@return string?
+function recipes.craft(width, height, items) end
+
+---What an anvil makes of two stacks (SNBT `{id, count, components}`, `{}` for empty) and an optional rename: SNBT `{result, cost, materials}`; `result` is empty when nothing can be made.
+---@param left string
+---@param right string
+---@param name string?
+---@return string?
+function recipes.anvil(left, right, name) end
+
+---What a smithing table makes of a template, a base and an addition (SNBT `{id, count, components}`, `{}` for an empty template): SNBT `{recipe, result}`, or nil when no recipe fits.
+---@param template string
+---@param base string
+---@param addition string
+---@return string?
+function recipes.smithing(template, base, addition) end
+
+---Item, enchantment, tag and effect data the server registries hold.
+---@class basalt.registries
+registries = {}
+
+---What the registries know about an item (stack size, durability, food, tool rules...) as SNBT, or nil.
+---@param id string
+---@return string?
+function registries.item_data(id) end
+
+---The item ids of a creative tab in display order (`building_blocks`, `op_blocks`...); empty for tabs without a fixed list.
+---@param tab string
+---@return string[]
+function registries.creative_tab_items(tab) end
+
+---The datapack definition of an enchantment as SNBT, or nil.
+---@param id string
+---@return string?
+function registries.enchantment_data(id) end
+
+---Every enchantment id.
+---@return string[]
+function registries.enchantment_ids() end
+
+---The tags of a registry, only `enchantment` today: each entry is the tag id followed by its members, all joined with `|`.
+---@param registry string
+---@return string[]
+function registries.tags(registry) end
+
+---Every mob effect as SNBT `{effects:[{id, protocol_id, colour}]}`.
+---@return string?
+function registries.mob_effects() end
+
+---Every potion as SNBT `{potions:[{id, effects}]}`.
+---@return string?
+function registries.potions() end
 
 ---Offline players, operators, the whitelist and bans.
 ---@class basalt.access
@@ -2291,7 +2885,7 @@ advancements = {}
 function advancements.ids() end
 
 ---@param id string
----@return { id: string, parent: string?, root: string, criteria: string[], children: string[], frame: string, icon: string }?
+---@return { id: string, parent: string?, root: string, criteria: string[], children: string[], frame: string, icon: string, json: string }?
 function advancements.info(id) end
 
 ---@param player basalt.Player
@@ -2305,6 +2899,13 @@ function advancements.grant(player, id, criterion) end
 ---@param criterion string
 ---@return boolean
 function advancements.revoke(player, id, criterion) end
+
+---Fires a trigger such as `minecraft:placed_block` for a player through the server's own evaluation; true when something listened.
+---@param player basalt.Player
+---@param trigger string
+---@param facts? { x?: integer, y?: integer, z?: integer, item?: string, count?: integer, distance?: number }
+---@return boolean
+function advancements.trigger(player, trigger, facts) end
 
 ---Criterion to the time it was obtained, in milliseconds.
 ---@param player basalt.Player
@@ -2367,6 +2968,72 @@ function datapacks.list() end
 
 function datapacks.refresh() end
 
+---The bytes of a file of the enabled data packs by its full name (`data/minecraft/recipe/stick.json`), top pack first.
+---@param name string
+---@return string?
+function datapacks.resource(name) end
+
+---Names of the visible data pack files that start with a prefix.
+---@param prefix? string
+---@return string[]
+function datapacks.resources(prefix) end
+
+---Id of the data pack a visible file comes from.
+---@param name string
+---@return string?
+function datapacks.resource_pack(name) end
+
+---Ids of the functions the server has loaded.
+---@return string[]
+function datapacks.functions() end
+
+---Ids of the function tags the server has loaded.
+---@return string[]
+function datapacks.function_tags() end
+
+---Queued runs of `/schedule`, soonest first.
+---@return {name: string, trigger_time: integer}[]
+function datapacks.scheduled() end
+
+---Queues a function (or `#tag`) to run `delay` ticks from now; false when it does not exist or the delay is 0.
+---@param function_id string
+---@param delay integer
+---@param replace? boolean Drops the earlier runs of the same function first (default true).
+---@return boolean
+function datapacks.schedule(function_id, delay, replace) end
+
+---Drops every queued run of a function (`#tag` for a tag) and answers how many went.
+---@param name string
+---@return integer
+function datapacks.unschedule(name) end
+
+---@class basalt.stopwatches
+stopwatches = {}
+
+---Ids of the stopwatches the server keeps, the ones `/stopwatch` makes.
+---@return string[]
+function stopwatches.list() end
+
+---Starts a stopwatch; false when the id is taken or malformed.
+---@param id string
+---@return boolean
+function stopwatches.create(id) end
+
+---Sets a stopwatch back to zero.
+---@param id string
+---@return boolean
+function stopwatches.restart(id) end
+
+---Deletes a stopwatch.
+---@param id string
+---@return boolean
+function stopwatches.remove(id) end
+
+---Seconds a stopwatch has run, or nil when there is none.
+---@param id string
+---@return number?
+function stopwatches.elapsed(id) end
+
 ---@class basalt.loot
 loot = {}
 
@@ -2379,10 +3046,32 @@ function loot.tables() end
 ---@return { item: string, count: integer, components: string }[]
 function loot.roll(table, context) end
 
+---Rolls a loot table given as JSON (the format of a loot table file) instead of a registered id.
+---@param json string
+---@param context? { world?: string, x?: number, y?: number, z?: number, luck?: number, seed?: integer, looter?: string }
+---@return { item: string, count: integer, components: string }[]
+function loot.roll_json(json, context) end
+
+---Evaluates a number provider given as JSON with an empty context; `float` picks a float provider over an int one.
+---@param json string
+---@param options? { float?: boolean, seed?: integer }
+---@return number?
+function loot.number(json, options) end
+
 ---Rolls enchantments onto a stack as the `enchant_with_levels` loot function does; `options` is an enchantment id or a tag with a leading `#`.
 ---@param spec { item: string, count?: integer, components?: string, levels?: integer, options?: string, seed?: integer, world?: string }
 ---@return { item: string, count: integer, components: string }?
 function loot.enchant(spec) end
+
+---@class basalt.trades
+trades = {}
+
+---Rolls the trades a villager of a profession offers at a level (1 to 5), as a villager of that level would; `variant` is the villager type the conditions see. With `listed` (trade ids) it draws `amount` of those without repeats instead.
+---@param profession string
+---@param level integer
+---@param context? { world?: string, x?: number, y?: number, z?: number, variant?: string, amount?: integer, seed?: integer, listed?: string[] }
+---@return { cost_a: { item: string, count: integer, components: string }, cost_b?: { item: string, count: integer, components: string }, result: { item: string, count: integer, components: string }, max_uses: integer, xp: integer, price_multiplier: number }[]?
+function trades.roll(profession, level, context) end
 
 ---@class basalt.maps
 maps = {}
@@ -2435,10 +3124,133 @@ function structures.file(id) end
 ---@return string?
 function structures.capture(box) end
 
+---@class basalt.TemplateBlock
+---@field x integer
+---@field y integer
+---@field z integer
+---@field state integer Block state id, before any rotation.
+---@field block string
+---@field nbt? string Block entity data as SNBT.
+
+---@class basalt.TemplateJigsaw
+---@field x integer
+---@field y integer
+---@field z integer
+---@field front string
+---@field top string
+---@field rollable boolean
+---@field name string
+---@field pool string
+---@field target string
+---@field final_state string
+---@field placement_priority integer
+---@field selection_priority integer
+
+---The blocks and jigsaws a template would place, with the world left alone; `block` keeps only blocks of that id, `absolute = false` keeps template positions.
+---@param snbt string
+---@param at? { x?: integer, y?: integer, z?: integer, rotation?: integer, mirror?: integer, pivot_x?: integer, pivot_z?: integer, block?: string, absolute?: boolean }
+---@return { size: { x: integer, y: integer, z: integer }, blocks: basalt.TemplateBlock[], jigsaws: basalt.TemplateJigsaw[] }?
+function structures.scan(snbt, at) end
+
 ---@param snbt string
 ---@param at { world: string, x: integer, y: integer, z: integer, rotation?: integer, mirror?: integer, integrity?: number, seed?: integer, entities?: boolean, palette?: integer }
 ---@return boolean
 function structures.place(snbt, at) end
+
+---Brings saved data of an older world version up to date with the native data fixers.
+---@class basalt.datafix
+datafix = {}
+
+---True for `chunk`, `player`, `entity_chunk`, `random_sequences`, `raids`, `map` and `scoreboard`.
+---@param type string
+---@return boolean
+function datafix.supports(type) end
+
+---Unnamed NBT as SNBT, upgraded from one data version to another (the current one by default); nil for an unsupported type.
+---@param type string
+---@param snbt string
+---@param from integer
+---@param to? integer
+---@return string?
+function datafix.upgrade(type, snbt, from, to) end
+
+---Terrain noise of the game data, sampled for a seed without generating a chunk. `settings` is a noise settings id such as `minecraft:overworld`.
+---@class basalt.worldgen
+worldgen = {}
+
+---@class basalt.TerrainShape
+---@field min_y integer
+---@field height integer
+---@field sea_level integer
+---@field default_block integer Block state id.
+---@field default_fluid integer Block state id.
+---@field legacy_random_source boolean
+---@field disable_mob_generation boolean
+
+---@param settings string
+---@return basalt.TerrainShape?
+function worldgen.shape(settings) end
+
+---A router function (`final_density`, `continents`, `erosion`, `depth`, `ridges`, `temperature`, `vegetation`, `preliminary_surface_level`) at a block; nil when unknown.
+---@param settings string
+---@param seed integer
+---@param name string
+---@param x integer
+---@param y integer
+---@param z integer
+---@return number?
+function worldgen.density(settings, seed, name, x, y, z) end
+
+---A named noise such as `minecraft:jagged`, seeded as the settings seed their random state.
+---@param settings string
+---@param seed integer
+---@param id string
+---@param x number
+---@param y number
+---@param z number
+---@return number?
+function worldgen.noise(settings, seed, id, x, y, z) end
+
+---The smallest and largest value of a named noise.
+---@param settings string
+---@param seed integer
+---@param id string
+---@return number? min
+---@return number? max
+function worldgen.noise_range(settings, seed, id) end
+
+---A noise of the game data (`minecraft:jagged`) seeded from a random source state: `legacy` with the 48-bit state in `low`, or the two xoroshiro words `low` and `high`. Returns a handle for `worldgen.noise_sample`, to free with `worldgen.noise_release`.
+---@param id string
+---@param seed? { legacy?: boolean, low?: integer, high?: integer, nether?: boolean }
+---@return integer?
+function worldgen.noise_create(id, seed) end
+
+---@param handle integer
+---@param x number
+---@param y number
+---@param z number
+---@return number?
+function worldgen.noise_sample(handle, x, y, z) end
+
+---@param handle integer
+function worldgen.noise_release(handle) end
+
+---One above the topmost block of the base terrain, `kind` being `world_surface` (default) or `ocean_floor`.
+---@param settings string
+---@param seed integer
+---@param x integer
+---@param z integer
+---@param kind? "world_surface"|"ocean_floor"
+---@return integer?
+function worldgen.height(settings, seed, x, z, kind) end
+
+---Block state ids of the base terrain column, bottom first.
+---@param settings string
+---@param seed integer
+---@param x integer
+---@param z integer
+---@return integer[]?
+function worldgen.column(settings, seed, x, z) end
 
 ---@class basalt.log
 log = {}
@@ -3755,6 +4567,35 @@ local _ = {}
 function _:cancel(message) end
 
 ---@class basalt.event.entity_goal
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field key string
+---@field phase string
+---@field result boolean (the handler may change it)
+local _ = {}
+
+---@class basalt.event.entity_potion_effect
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field effect string
+---@field amplifier integer
+---@field duration number
+---@field action string
+---@field cause string
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.entity_behavior
 ---@field name string
 ---@field cancelled boolean
 ---@field entity basalt.Entity?
@@ -5193,6 +6034,8 @@ function _:cancel(message) end
 ---@overload fun(event: "entity.target", filter: table, handler: fun(e: basalt.event.entity_target))
 ---@overload fun(event: "entity.goal", handler: fun(e: basalt.event.entity_goal))
 ---@overload fun(event: "entity.goal", filter: table, handler: fun(e: basalt.event.entity_goal))
+---@overload fun(event: "entity.behavior", handler: fun(e: basalt.event.entity_behavior))
+---@overload fun(event: "entity.behavior", filter: table, handler: fun(e: basalt.event.entity_behavior))
 ---@overload fun(event: "entity.potion_effect", handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.potion_effect", filter: table, handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.combust", handler: fun(e: basalt.event.entity_combust))
@@ -5532,6 +6375,8 @@ function on(event, handler) end
 ---@overload fun(event: "entity.target", filter: table, handler: fun(e: basalt.event.entity_target))
 ---@overload fun(event: "entity.goal", handler: fun(e: basalt.event.entity_goal))
 ---@overload fun(event: "entity.goal", filter: table, handler: fun(e: basalt.event.entity_goal))
+---@overload fun(event: "entity.behavior", handler: fun(e: basalt.event.entity_behavior))
+---@overload fun(event: "entity.behavior", filter: table, handler: fun(e: basalt.event.entity_behavior))
 ---@overload fun(event: "entity.potion_effect", handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.potion_effect", filter: table, handler: fun(e: basalt.event.entity_potion_effect))
 ---@overload fun(event: "entity.combust", handler: fun(e: basalt.event.entity_combust))
