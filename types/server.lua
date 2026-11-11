@@ -1333,6 +1333,31 @@ function World:highest(x, z, kind) end
 ---@return boolean
 function World:chunk_loaded(chunk_x, chunk_z) end
 
+---Raw NBT bytes of the chunk as stored on disk, or nil when the world has no such chunk.
+---@param chunk_x integer
+---@param chunk_z integer
+---@return string|nil
+function World:stored_chunk_nbt(chunk_x, chunk_z) end
+
+---Whether the world's region storage holds the chunk.
+---@param chunk_x integer
+---@param chunk_z integer
+---@return boolean
+function World:has_stored_chunk(chunk_x, chunk_z) end
+
+---Writes raw NBT bytes as the stored chunk and flushes its region; false when the chunk cannot be replaced.
+---@param chunk_x integer
+---@param chunk_z integer
+---@param nbt string
+---@return boolean
+function World:store_chunk_nbt(chunk_x, chunk_z, nbt) end
+
+---The chunks stored in one region file, as `{x, z}` pairs.
+---@param region_x integer
+---@param region_z integer
+---@return integer[][]
+function World:stored_chunks(region_x, region_z) end
+
 ---Loads or generates the chunk, and returns whether it is there afterwards.
 ---@param chunk_x integer
 ---@param chunk_z integer
@@ -1945,7 +1970,7 @@ function World:fluid_flow(x, y, z) end
 function World:random_tick(x, y, z) end
 
 ---Plants a named tree feature as the world generator would; with `apply` false nothing changes and the blocks it would set come back. Nil when it does not fit.
----@param tree "oak"|"fancy_oak"|"swamp_oak"|"azalea"|"birch"|"super_birch"|"jungle_tree"|"jungle_bush"|"mega_jungle"|"spruce"|"pine"|"acacia"|"dark_oak"|"pale_oak"|"pale_oak_creaking"|"mega_spruce"|"mega_pine"|"mangrove"|"tall_mangrove"|"cherry"
+---@param tree "oak"|"fancy_oak"|"swamp_oak"|"azalea"|"birch"|"super_birch"|"jungle_tree"|"jungle_bush"|"mega_jungle"|"spruce"|"pine"|"acacia"|"dark_oak"|"pale_oak"|"pale_oak_creaking"|"mega_spruce"|"mega_pine"|"mangrove"|"tall_mangrove"|"cherry"|"red_poplar"|"orange_poplar"|"yellow_poplar"|"brown_mushroom"|"red_mushroom"|"crimson_fungus"|"warped_fungus"|"chorus_plant"
 ---@param x integer
 ---@param y integer
 ---@param z integer

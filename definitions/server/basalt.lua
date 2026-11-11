@@ -224,6 +224,22 @@ function Entity:damage(amount, cause, attacker_id) end
 ---@return boolean
 function Entity:kill() end
 
+---The damage log of a mob, 8 values per entry: damage type, message id, direct entity id, cause entity id, damage, fall distance, fall location, game tick.
+---@return any[]
+function Entity:combat() end
+
+function Entity:combat_clear() end
+
+---@param type string
+---@param message_id string
+---@param direct integer
+---@param cause integer
+---@param damage number
+---@param fall_distance number
+---@param location string
+---@param tick integer
+function Entity:combat_push(type, message_id, direct, cause, damage, fall_distance, location, tick) end
+
 ---Gives a status effect; -1 ticks is infinite.
 ---@param effect string
 ---@param ticks integer
@@ -1485,6 +1501,31 @@ function World:highest(x, z, kind) end
 ---@return boolean
 function World:chunk_loaded(chunk_x, chunk_z) end
 
+---Raw NBT bytes of the chunk as stored on disk, or nil when the world has no such chunk.
+---@param chunk_x integer
+---@param chunk_z integer
+---@return string|nil
+function World:stored_chunk_nbt(chunk_x, chunk_z) end
+
+---Whether the world's region storage holds the chunk.
+---@param chunk_x integer
+---@param chunk_z integer
+---@return boolean
+function World:has_stored_chunk(chunk_x, chunk_z) end
+
+---Writes raw NBT bytes as the stored chunk and flushes its region; false when the chunk cannot be replaced.
+---@param chunk_x integer
+---@param chunk_z integer
+---@param nbt string
+---@return boolean
+function World:store_chunk_nbt(chunk_x, chunk_z, nbt) end
+
+---The chunks stored in one region file, as `{x, z}` pairs.
+---@param region_x integer
+---@param region_z integer
+---@return integer[][]
+function World:stored_chunks(region_x, region_z) end
+
 ---Loads or generates the chunk, and returns whether it is there afterwards.
 ---@param chunk_x integer
 ---@param chunk_z integer
@@ -2110,7 +2151,7 @@ function World:fluid_flow(x, y, z) end
 function World:random_tick(x, y, z) end
 
 ---Plants a named tree feature as the world generator would; with `apply` false nothing changes and the blocks it would set come back. Nil when it does not fit.
----@param tree "oak"|"fancy_oak"|"swamp_oak"|"azalea"|"birch"|"super_birch"|"jungle_tree"|"jungle_bush"|"mega_jungle"|"spruce"|"pine"|"acacia"|"dark_oak"|"pale_oak"|"pale_oak_creaking"|"mega_spruce"|"mega_pine"|"mangrove"|"tall_mangrove"|"cherry"
+---@param tree "oak"|"fancy_oak"|"swamp_oak"|"azalea"|"birch"|"super_birch"|"jungle_tree"|"jungle_bush"|"mega_jungle"|"spruce"|"pine"|"acacia"|"dark_oak"|"pale_oak"|"pale_oak_creaking"|"mega_spruce"|"mega_pine"|"mangrove"|"tall_mangrove"|"cherry"|"red_poplar"|"orange_poplar"|"yellow_poplar"|"brown_mushroom"|"red_mushroom"|"crimson_fungus"|"warped_fungus"|"chorus_plant"
 ---@param x integer
 ---@param y integer
 ---@param z integer
@@ -3058,6 +3099,11 @@ function loot.roll_json(json, context) end
 ---@return number?
 function loot.number(json, options) end
 
+---Runs loot functions given as game data JSON (one object, or an array) on a stack; nil when the JSON or the world is unknown.
+---@param spec { functions: string, item: string, count?: integer, components?: string, world?: string, x?: number, y?: number, z?: number, seed?: integer }
+---@return { item: string, count: integer, components: string }?
+function loot.apply(spec) end
+
 ---Rolls enchantments onto a stack as the `enchant_with_levels` loot function does; `options` is an enchantment id or a tag with a leading `#`.
 ---@param spec { item: string, count?: integer, components?: string, levels?: integer, options?: string, seed?: integer, world?: string }
 ---@return { item: string, count: integer, components: string }?
@@ -3161,18 +3207,59 @@ function structures.place(snbt, at) end
 ---@class basalt.datafix
 datafix = {}
 
----True for `chunk`, `player`, `entity_chunk`, `random_sequences`, `raids`, `map` and `scoreboard`.
+---The world version the fixers bring data up to.
+---@type integer
+datafix.current_version = 0
+
+---True for a data type the fixers know: `chunk`, `player`, `entity_chunk`, `level`, `structure`, `poi_chunk`, `options`, `hotbar`, `world_gen_settings`, `debug_profile`, `stats`, `advancements`, a saved data name such as `raids` or `saved_data:<name>`.
 ---@param type string
 ---@return boolean
 function datafix.supports(type) end
 
----Unnamed NBT as SNBT, upgraded from one data version to another (the current one by default); nil for an unsupported type.
+---The 1.13 block state of a pre-1.13 `block << 4 | data` id: its name and a table of its properties (air when the id is unmapped).
+---@param id integer
+---@return string name
+---@return table<string, string> properties
+function datafix.legacy_state(id) end
+
+---Every data type name the fixers know.
+---@return string[]
+function datafix.types() end
+
+---Unnamed NBT as SNBT, upgraded from one data version to another (the current one by default); nil and the reason when a step has no native fix.
 ---@param type string
 ---@param snbt string
 ---@param from integer
 ---@param to? integer
 ---@return string?
+---@return string? reason
 function datafix.upgrade(type, snbt, from, to) end
+
+---Runs the one vanilla step `name` registered at `version_key` (`version * 10 + sub_version`) on unnamed NBT as SNBT.
+---@param type string
+---@param name string
+---@param snbt string
+---@param version_key integer
+---@return string?
+---@return string? reason
+function datafix.step(type, name, snbt, version_key) end
+
+---The first step between two versions that cannot run natively for the type, or nil when every step can.
+---@param type string
+---@param from integer
+---@param to? integer
+---@return string?
+function datafix.missing(type, from, to) end
+
+---@class basalt.DatafixStep
+---@field version integer
+---@field sub_version integer
+---@field name string
+
+---Every vanilla step that touches the type, in registration order.
+---@param type string
+---@return basalt.DatafixStep[]
+function datafix.steps(type) end
 
 ---Terrain noise of the game data, sampled for a seed without generating a chunk. `settings` is a noise settings id such as `minecraft:overworld`.
 ---@class basalt.worldgen
@@ -3200,6 +3287,16 @@ function worldgen.shape(settings) end
 ---@param z integer
 ---@return number?
 function worldgen.density(settings, seed, name, x, y, z) end
+
+---A density function given as game data JSON (`{"type":"minecraft:add",...}`) at a block; nil when it does not parse. Besides the arithmetic, noise and spline nodes, `minecraft:pow` (`base`, `exponent`) and `minecraft:floor`, `round`, `ceil` and `truncate` (`input`, optional `multiple`) are evaluated.
+---@param settings string
+---@param seed integer
+---@param json string
+---@param x integer
+---@param y integer
+---@param z integer
+---@return number?
+function worldgen.density_tree(settings, seed, json, x, y, z) end
 
 ---A named noise such as `minecraft:jagged`, seeded as the settings seed their random state.
 ---@param settings string
@@ -3294,6 +3391,21 @@ function files.list(path) end
 ---@param text string
 ---@return boolean
 function files.write(path, text) end
+
+---Kind, size and modified time of a file in the plugin folder; nil when it does not exist.
+---@param path string
+---@return { kind: "file"|"directory"|"other", size: integer, modified: integer }?
+function files.stat(path) end
+
+---Every path under a folder of the plugin folder, parents first; directories end with a slash.
+---@param path string
+---@return string[]
+function files.walk(path) end
+
+---Whether the file system holding a plugin folder path supports atomic moves and hard links.
+---@param path string
+---@return { atomic_move: boolean, hard_links: boolean }
+function files.capabilities(path) end
 
 ---@class basalt.Packet
 ---@field name string The vanilla name, such as `clientbound.set_title_text`.
