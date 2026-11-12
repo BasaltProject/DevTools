@@ -118,6 +118,24 @@ function Player:tab_entry(id, name, text, latency) end
 ---@return boolean
 function Player:remove_tab_entry(id) end
 
+---Overrides one permission node for this player until the proxy stops; nil removes the override.
+---@param node string
+---@param granted boolean?
+function Player:set_permission(node, granted) end
+
+---The name of the player's proxy group.
+---@return string
+function Player:group() end
+
+---Puts the player in a group of groups.toml, or in none when nil; false when that is not possible.
+---@param group string?
+---@return boolean
+function Player:set_group(group) end
+
+---The permission patterns the player's group chain and overrides grant.
+---@return string[]
+function Player:permissions() end
+
 ---Makes the player say a line, or run it as a command when it starts with a slash; sent unsigned.
 ---@param text string
 ---@return boolean
