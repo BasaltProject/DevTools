@@ -14,7 +14,7 @@
 ---@field size integer
 ---@field player_name string
 ---@field player_uuid string
----@field player { name: string, uuid: string, server: string }?
+---@field player basalt.Player?
 ---@field editable boolean False for login packets and the ones the proxy answers itself (keep alive, cookies, resource packs, transfer, configuration changes): they can be read but not cancelled or edited.
 ---@field cancelled boolean Setting it to true cancels the packet (not on `packet.watch`).
 ---@field bytes integer[] The body without the id; assigning a list replaces it.
@@ -37,6 +37,138 @@ function Packet:send(name, bytes, intercept) end
 function Packet:receive(name, bytes, intercept) end
 
 ---Needs `packets = true` under `[capabilities]` in plugin.toml and the permission to be granted in plugins.toml.
+---@class basalt.Player
+---@field name string
+---@field uuid string
+---@field server string The backend the player is on; empty before one is chosen.
+local Player = {}
+
+---Shows a title and subtitle (MiniMessage text); the times are in ticks and apply when all three are given.
+---@param title string?
+---@param subtitle string?
+---@param fade_in integer?
+---@param stay integer?
+---@param fade_out integer?
+---@return boolean
+function Player:title(title, subtitle, fade_in, stay, fade_out) end
+
+---Clears the title; with `reset` the timings go back to their defaults too.
+---@param reset boolean?
+---@return boolean
+function Player:clear_title(reset) end
+
+---@param text string
+---@return boolean
+function Player:action_bar(text) end
+
+---Sets the tab list header and footer; nil leaves a part empty.
+---@param header string?
+---@param footer string?
+---@return boolean
+function Player:tab_list(header, footer) end
+
+---Shows a boss bar the plugin names; `color` is pink, blue, red, green, yellow, purple or white, `overlay` progress or notched_6, 10, 12, 20.
+---@param id string
+---@param text string
+---@param progress number 0 to 1
+---@param color string?
+---@param overlay string?
+---@return boolean
+function Player:show_bossbar(id, text, progress, color, overlay) end
+
+---@param id string
+---@return boolean
+function Player:hide_bossbar(id) end
+
+---@param id string
+---@param progress number
+---@return boolean
+function Player:bossbar_progress(id, progress) end
+
+---@param id string
+---@param text string
+---@return boolean
+function Player:bossbar_title(id, text) end
+
+---@param id string
+---@param color string
+---@param overlay string
+---@return boolean
+function Player:bossbar_style(id, color, overlay) end
+
+---Shows the proxy's own sidebar: a title and up to 15 lines, top to bottom.
+---@param title string
+---@param ... string
+---@return boolean
+function Player:sidebar(title, ...) end
+
+---@return boolean
+function Player:clear_sidebar() end
+
+---Adds a row to this player's tab list, or updates it; `id` names it for the plugin, `name` is the profile name (up to 16 characters).
+---@param id string
+---@param name string
+---@param text string
+---@param latency integer?
+---@return boolean
+function Player:tab_entry(id, name, text, latency) end
+
+---@param id string
+---@return boolean
+function Player:remove_tab_entry(id) end
+
+---Overrides one permission node for this player until the proxy stops; nil removes the override.
+---@param node string
+---@param granted boolean?
+function Player:set_permission(node, granted) end
+
+---The name of the player's proxy group.
+---@return string
+function Player:group() end
+
+---Puts the player in a group of groups.toml, or in none when nil; false when that is not possible.
+---@param group string?
+---@return boolean
+function Player:set_group(group) end
+
+---The permission patterns the player's group chain and overrides grant.
+---@return string[]
+function Player:permissions() end
+
+---Shows a dialog in play or configuration; `kind` is notice, confirmation (exactly two buttons) or multi_action; every button is a label and the command it runs as the player.
+---@param kind "notice"|"confirmation"|"multi_action"
+---@param title string
+---@param body string?
+---@param ... string label, command, label, command, ...
+---@return boolean
+function Player:dialog(kind, title, body, ...) end
+
+---@return boolean
+function Player:clear_dialog() end
+
+---Makes the player say a line, or run it as a command when it starts with a slash; sent unsigned.
+---@param text string
+---@return boolean
+function Player:chat(text) end
+
+---Moves the client to another host with a transfer packet.
+---@param host string
+---@param port integer
+---@return boolean
+function Player:transfer(host, port) end
+
+---Stores a cookie on the client under a namespaced key.
+---@param key string
+---@param data string
+---@return boolean
+function Player:set_cookie(key, data) end
+
+---Asks the client for a cookie; the callback gets its data, or nil when it has none or does not answer.
+---@param key string
+---@param callback fun(data: string?)
+---@return boolean
+function Player:cookie(key, callback) end
+
 ---@class basalt.packet
 packet = {}
 
