@@ -136,6 +136,17 @@ function Player:set_group(group) end
 ---@return string[]
 function Player:permissions() end
 
+---Shows a dialog in play or configuration; `kind` is notice, confirmation (exactly two buttons) or multi_action; every button is a label and the command it runs as the player.
+---@param kind "notice"|"confirmation"|"multi_action"
+---@param title string
+---@param body string?
+---@param ... string label, command, label, command, ...
+---@return boolean
+function Player:dialog(kind, title, body, ...) end
+
+---@return boolean
+function Player:clear_dialog() end
+
 ---Makes the player say a line, or run it as a command when it starts with a slash; sent unsigned.
 ---@param text string
 ---@return boolean
