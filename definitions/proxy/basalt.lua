@@ -97,6 +97,20 @@ function Player:bossbar_title(id, text) end
 ---@return boolean
 function Player:bossbar_style(id, color, overlay) end
 
+---Shows the proxy's own sidebar: a title and up to 15 lines, top to bottom.
+---@param title string
+---@param ... string
+---@return boolean
+function Player:sidebar(title, ...) end
+
+---@return boolean
+function Player:clear_sidebar() end
+
+---Makes the player say a line, or run it as a command when it starts with a slash; sent unsigned.
+---@param text string
+---@return boolean
+function Player:chat(text) end
+
 ---Moves the client to another host with a transfer packet.
 ---@param host string
 ---@param port integer
