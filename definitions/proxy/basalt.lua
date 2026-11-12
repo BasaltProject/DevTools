@@ -106,6 +106,18 @@ function Player:sidebar(title, ...) end
 ---@return boolean
 function Player:clear_sidebar() end
 
+---Adds a row to this player's tab list, or updates it; `id` names it for the plugin, `name` is the profile name (up to 16 characters).
+---@param id string
+---@param name string
+---@param text string
+---@param latency integer?
+---@return boolean
+function Player:tab_entry(id, name, text, latency) end
+
+---@param id string
+---@return boolean
+function Player:remove_tab_entry(id) end
+
 ---Makes the player say a line, or run it as a command when it starts with a slash; sent unsigned.
 ---@param text string
 ---@return boolean
