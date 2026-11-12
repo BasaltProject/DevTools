@@ -160,7 +160,8 @@ def render(rows, types=None, events=None):
             for param in params.split(", "):
                 pname, ptype = param.split(": ")
                 out.append(f"---@param {pname} {ptype}")
-        out.append(f"function {name}({params}) end")
+        names = params if params == "..." else ", ".join(param.split(": ")[0] for param in params.split(", "))
+        out.append(f"function {name}({names}) end")
         out.append("")
     for path in sorted(rows):
         root = path.split(".")[0]
