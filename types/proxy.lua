@@ -67,3 +67,30 @@ function packet.send(player, name, bytes, intercept) end
 ---@param intercept? boolean Unused: a packet sent this way never runs the listeners.
 ---@return boolean
 function packet.receive(player, name, bytes, intercept) end
+
+---Bans an address in the antibot; true when the ban was recorded.
+---@param address string
+---@return boolean
+function antibot.ban(address) end
+
+---Lifts an antibot ban; true when the address was banned.
+---@param address string
+---@return boolean
+function antibot.unban(address) end
+
+---Marks a player as verified, so the antibot lets them in without a check.
+---@param player string
+function antibot.verify(player) end
+
+---Removes the verified mark of a player.
+---@param player string
+function antibot.unverify(player) end
+
+---True when the player is marked as verified.
+---@param player string
+---@return boolean
+function antibot.is_verified(player) end
+
+---True while the antibot is in attack mode.
+---@return boolean
+function antibot.under_attack() end
