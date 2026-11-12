@@ -40,15 +40,15 @@ function Packet:receive(name, bytes, intercept) end
 ---@class basalt.packet
 packet = {}
 
----Listens to packets as the proxy relays them; a name is `clientbound.set_title_text`, `serverbound.play.*` or similar.
+---Listens to packets as the proxy relays them; a name is `clientbound.set_title_text`, `serverbound.play.*` or similar. `fail = "closed"` cancels the packet when the plugin interpreter is too busy to run the listener (default "open" lets it pass).$
 ---@param name string
----@param options { priority?: "first"|"early"|"normal"|"late"|"last" }|fun(p: basalt.Packet)
+---@param options { priority?: "first"|"early"|"normal"|"late"|"last", fail?: "open"|"closed" }|fun(p: basalt.Packet)
 ---@param handler? fun(p: basalt.Packet)
 function packet.on(name, options, handler) end
 
 ---Like `packet.on`, but it only observes: it cannot cancel or edit.
 ---@param name string
----@param options { priority?: "first"|"early"|"normal"|"late"|"last" }|fun(p: basalt.Packet)
+---@param options { priority?: "first"|"early"|"normal"|"late"|"last", fail?: "open"|"closed" }|fun(p: basalt.Packet)
 ---@param handler? fun(p: basalt.Packet)
 function packet.watch(name, options, handler) end
 
