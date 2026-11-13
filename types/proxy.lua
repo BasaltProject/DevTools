@@ -36,7 +36,7 @@ function Packet:send(name, bytes, intercept) end
 ---@return boolean
 function Packet:receive(name, bytes, intercept) end
 
----Needs `packets = true` under `[capabilities]` in plugin.toml and the permission to be granted in plugins.toml.
+---Needs `packets = true` under `[capabilities]` in plugin.toml and the permission to be granted under `[plugins.allow]` in proxy.toml.
 ---@class basalt.Player
 ---@field name string
 ---@field uuid string
