@@ -722,6 +722,7 @@ function Player:effect(name, seconds, level) end
 ---@param vars? table<string, any>
 function Player:kick(message, vars) end
 
+---Whether the permission chain grants the player a node: plugin providers first, then grants and groups.toml.
 ---@param permission string
 ---@return boolean
 function Player:may(permission) end
@@ -2084,6 +2085,38 @@ function fill(text, player) end
 ---@param name string
 ---@param fn fun(player: basalt.Player?): string
 function placeholder(name, fn) end
+
+---@class basalt.PermissionSubject
+---@field name string
+---@field uuid string Empty for the console.
+---@field console boolean
+
+---@class basalt.PermissionContext
+---@field world string The world the player is in.
+
+---@class basalt.permissions
+permissions = {}
+
+---Asks the permission chain: true or false when a provider decides, nil when the player is not online.
+---@param who basalt.Player|string A player, a player name, or `"console"`.
+---@param node string
+---@return boolean?
+function permissions.check(who, node) end
+
+---A text option for a player from the providers, such as `prefix` or `suffix`; nil when none gives one.
+---@param who basalt.Player|string
+---@param key string
+---@return string?
+function permissions.meta(who, key) end
+
+---Answers permission checks for the whole server until the plugin unloads. Return nil to let lower providers decide; the default is the plugin grants over groups.toml.
+---@param provider fun(subject: basalt.PermissionSubject, node: string, context: basalt.PermissionContext): boolean?|{ check?: fun(subject: basalt.PermissionSubject, node: string, context: basalt.PermissionContext): boolean?, meta?: fun(subject: basalt.PermissionSubject, key: string, context: basalt.PermissionContext): string? }
+---@param options { priority?: integer }? Higher runs first; above 0, default 100.
+---@return { remove: fun(), cancel: fun() }
+function permissions.provide(provider, options) end
+
+---Says the answers of this plugin's provider changed, so command trees are sent again.
+function permissions.changed() end
 
 ---@param world string
 ---@param x number
