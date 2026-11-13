@@ -15,6 +15,21 @@ SIGNATURES = {
 }
 
 
+STORE = [
+    "---A plugin-wide table: `store.key` reads a boolean, number or string, `store.key = value` writes it and `nil` deletes. Needs `storage`.",
+    "---@class basalt.store",
+    "---@field [string] boolean|number|string|nil",
+    "---@field top fun(key: string, limit?: integer): basalt.StoreEntry[] The highest values of a key across the server store and every player, highest first; `limit` defaults to 10.",
+    "store = {}",
+    "",
+    "---@class basalt.StoreEntry",
+    "---@field uuid string The holder: `server` for the store, or a player's uuid.",
+    "---@field name string The holder's name when known, otherwise the same as `uuid`.",
+    "---@field value boolean|number|string",
+    "",
+]
+
+
 def read(api: Path):
     rows = {}
     for line in api.read_text().splitlines():
@@ -140,7 +155,9 @@ def render(rows, types=None, events=None):
         defined |= {"on", "watch"}
     tables = sorted(p for p, k in rows.items() if k == "table" and p.split(".")[0] not in STDLIB)
     for path in tables:
-        if "." not in path and path not in roots:
+        if path == "store" and path not in roots:
+            out += STORE
+        elif "." not in path and path not in roots:
             if any(other.startswith(path + ".") for other in rows):
                 out.append(f"---@class basalt.{path}")
             else:

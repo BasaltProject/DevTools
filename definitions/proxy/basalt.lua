@@ -249,8 +249,16 @@ plugin = {}
 ---@class basalt.servers
 servers = {}
 
+---A plugin-wide table: `store.key` reads a boolean, number or string, `store.key = value` writes it and `nil` deletes. Needs `storage`.
 ---@class basalt.store
+---@field [string] boolean|number|string|nil
+---@field top fun(key: string, limit?: integer): basalt.StoreEntry[] The highest values of a key across the server store and every player, highest first; `limit` defaults to 10.
 store = {}
+
+---@class basalt.StoreEntry
+---@field uuid string The holder: `server` for the store, or a player's uuid.
+---@field name string The holder's name when known, otherwise the same as `uuid`.
+---@field value boolean|number|string
 
 ---@param ... any
 ---@return any
@@ -328,22 +336,6 @@ function servers.list(...) end
 ---@param ... any
 ---@return any
 function servers.players(...) end
-
----@param ... any
----@return any
-function store.delete(...) end
-
----@param ... any
----@return any
-function store.get(...) end
-
----@param ... any
----@return any
-function store.keys(...) end
-
----@param ... any
----@return any
-function store.set(...) end
 
 ---@param ... any
 ---@return any
