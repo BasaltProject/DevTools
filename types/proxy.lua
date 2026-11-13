@@ -192,6 +192,30 @@ function Player:server_links(...) end
 ---@return boolean
 function Player:chat_completions(action, ...) end
 
+---Offers a resource pack; plugin packs stay on the client across server changes. `id` names it (a UUID or any text; the URL when nil). Returns the pack's UUID, or nil when the proxy refused it. Statuses arrive as `player.resource_pack` events.
+---@param url string
+---@param hash string? SHA-1 as 40 hex digits.
+---@param required boolean?
+---@param prompt string? MiniMessage text.
+---@param id string?
+---@return string?
+function Player:resource_pack(url, hash, required, prompt, id) end
+
+---Takes back a pack this or another plugin offered, by the id given to resource_pack or the UUID it returned.
+---@param id string
+---@return boolean
+function Player:remove_resource_pack(id) end
+
+---Takes back every pack plugins offered; the backend's stay.
+---@return boolean
+function Player:clear_resource_packs() end
+
+---@class basalt.event.player_resource_pack
+---@field player basalt.Player
+---@field player_name string
+---@field id string The pack's UUID.
+---@field status "successfully_loaded"|"declined"|"failed_download"|"accepted"|"downloaded"|"invalid_url"|"failed_reload"|"discarded"
+
 ---@class basalt.ServerPing
 ---@field motd string The description as plain text.
 ---@field motd_json string The description as component JSON.
@@ -209,6 +233,20 @@ servers = {}
 ---@param callback fun(answer: basalt.ServerPing?)
 ---@return boolean
 function servers.ping(name, callback) end
+
+---Adds a server until the proxy stops, never written to servers.toml. It copies forwarding, protocol and plugin messages from `like`, or from the first default server. A server of the same name later added to servers.toml replaces it on reload. Returns false and the reason when it cannot.
+---@param name string
+---@param host string
+---@param port integer?
+---@param like string?
+---@return boolean ok
+---@return string? reason
+function servers.register(name, host, port, like) end
+
+---Removes a server added with servers.register; false for the ones of servers.toml.
+---@param name string
+---@return boolean
+function servers.unregister(name) end
 
 ---@class basalt.packet
 packet = {}
