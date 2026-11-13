@@ -55,6 +55,11 @@ local Player = {}
 ---@field server_listing boolean
 ---@field particles "all"|"decreased"|"minimal"
 
+---Whether the permission chain grants the player a node: plugin providers first, then groups.toml.
+---@param node string
+---@return boolean
+function Player:has_permission(node) end
+
 ---Shows a title and subtitle (MiniMessage text); the times are in ticks and apply when all three are given.
 ---@param title string?
 ---@param subtitle string?
@@ -247,6 +252,47 @@ function servers.register(name, host, port, like) end
 ---@param name string
 ---@return boolean
 function servers.unregister(name) end
+
+---@class basalt.PermissionSubject
+---@field name string
+---@field uuid string Empty for the console and for a player the proxy has not seen.
+---@field console boolean
+
+---@class basalt.PermissionContext
+---@field server string The backend the player is on; empty when none.
+---@field world string
+
+---Whether the permission chain grants a player a node; the same as `player:has_permission(node)`.
+---@param who basalt.Player|string
+---@param node string
+---@return boolean
+function has_permission(who, node) end
+
+---@class basalt.permissions
+permissions = {}
+
+---Asks the permission chain: true or false when a provider decides, nil when none does (which denies).
+---@param who basalt.Player|string A player or a player name; `{is_console = true}` asks for the console.
+---@param node string
+---@param context { server?: string, world?: string }?
+---@return boolean?
+function permissions.check(who, node, context) end
+
+---A text option for a player from the providers, such as `prefix` or `suffix`; nil when none gives one.
+---@param who basalt.Player|string
+---@param key string
+---@param context { server?: string, world?: string }?
+---@return string?
+function permissions.meta(who, key, context) end
+
+---Answers permission checks for the whole proxy until the plugin unloads. Return nil to let lower providers decide; the default is groups.toml.
+---@param provider fun(subject: basalt.PermissionSubject, node: string, context: basalt.PermissionContext): boolean?|{ check?: fun(subject: basalt.PermissionSubject, node: string, context: basalt.PermissionContext): boolean?, meta?: fun(subject: basalt.PermissionSubject, key: string, context: basalt.PermissionContext): string? }
+---@param options { priority?: integer }? Higher runs first; above 0, default 100.
+---@return { remove: fun() }
+function permissions.provide(provider, options) end
+
+---Says the answers of this plugin's provider changed, so the proxy rebuilds what depends on them.
+function permissions.changed() end
 
 ---@class basalt.packet
 packet = {}
