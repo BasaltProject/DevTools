@@ -41,7 +41,19 @@ function Packet:receive(name, bytes, intercept) end
 ---@field name string
 ---@field uuid string
 ---@field server string The backend the player is on; empty before one is chosen.
+---@field settings basalt.PlayerSettings? What the client last said about itself; nil until it sends its client information.
 local Player = {}
+
+---@class basalt.PlayerSettings
+---@field locale string Such as `en_us`.
+---@field view_distance integer
+---@field chat_mode "full"|"system"|"hidden"
+---@field chat_colors boolean
+---@field skin_parts integer Bit mask: cape 1, jacket 2, left sleeve 4, right sleeve 8, left leg 16, right leg 32, hat 64.
+---@field main_hand "left"|"right"
+---@field text_filtering boolean
+---@field server_listing boolean
+---@field particles "all"|"decreased"|"minimal"
 
 ---Shows a title and subtitle (MiniMessage text); the times are in ticks and apply when all three are given.
 ---@param title string?
@@ -168,6 +180,35 @@ function Player:set_cookie(key, data) end
 ---@param callback fun(data: string?)
 ---@return boolean
 function Player:cookie(key, callback) end
+
+---Sets the links of the client's pause menu: pairs of a label and a URL. A label that is a known type (report_bug, community_guidelines, support, status, feedback, community, website, forums, news, announcements) is translated by the client; any other is MiniMessage text. No pairs clears them.
+---@param ... string label, url, label, url, ...
+---@return boolean
+function Player:server_links(...) end
+
+---Changes the words the client offers when completing chat.
+---@param action "add"|"remove"|"set"
+---@param ... string
+---@return boolean
+function Player:chat_completions(action, ...) end
+
+---@class basalt.ServerPing
+---@field motd string The description as plain text.
+---@field motd_json string The description as component JSON.
+---@field online integer
+---@field max_players integer
+---@field version string
+---@field protocol integer
+---@field latency integer Milliseconds the answer took.
+
+---@class basalt.servers
+servers = {}
+
+---Asks a configured server for its server list status; the callback gets the answer, or nil when it did not answer. False when the server is not configured.
+---@param name string
+---@param callback fun(answer: basalt.ServerPing?)
+---@return boolean
+function servers.ping(name, callback) end
 
 ---@class basalt.packet
 packet = {}
