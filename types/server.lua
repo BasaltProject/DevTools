@@ -723,6 +723,11 @@ function Player:effect(name, seconds, level) end
 function Player:kick(message, vars) end
 
 ---Whether the permission chain grants the player a node: plugin providers first, then grants and groups.toml.
+---@param node string
+---@return boolean
+function Player:has_permission(node) end
+
+---Alias of `Player:has_permission`, kept for existing plugins.
 ---@param permission string
 ---@return boolean
 function Player:may(permission) end
