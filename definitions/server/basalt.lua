@@ -6162,6 +6162,57 @@ local _ = {}
 ---@param message? string
 function _:cancel(message) end
 
+---@class basalt.event.block_dispense_loot
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field pos basalt.Position
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field loot_table any
+---@field loot any (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.block_vault_display_item
+---@field name string
+---@field cancelled boolean
+---@field pos basalt.Position
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field item string (the handler may change it)
+---@field count integer (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.block_vault_change_state
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field pos basalt.Position
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field player_name string
+---@field player_uuid string
+---@field from any
+---@field to any
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
 ---@class basalt.event.player_bucket_entity
 ---@field name string
 ---@field cancelled boolean
@@ -6536,6 +6587,12 @@ function _:cancel(message) end
 ---@overload fun(event: "player.harvest_block", filter: table, handler: fun(e: basalt.event.player_harvest_block))
 ---@overload fun(event: "player.bucket_entity", handler: fun(e: basalt.event.player_bucket_entity))
 ---@overload fun(event: "player.bucket_entity", filter: table, handler: fun(e: basalt.event.player_bucket_entity))
+---@overload fun(event: "block.dispense_loot", handler: fun(e: basalt.event.block_dispense_loot))
+---@overload fun(event: "block.dispense_loot", filter: table, handler: fun(e: basalt.event.block_dispense_loot))
+---@overload fun(event: "block.vault_display_item", handler: fun(e: basalt.event.block_vault_display_item))
+---@overload fun(event: "block.vault_display_item", filter: table, handler: fun(e: basalt.event.block_vault_display_item))
+---@overload fun(event: "block.vault_change_state", handler: fun(e: basalt.event.block_vault_change_state))
+---@overload fun(event: "block.vault_change_state", filter: table, handler: fun(e: basalt.event.block_vault_change_state))
 ---@overload fun(event: string, handler: fun(e: table))
 ---@param event string
 ---@param handler fun(e: table)
@@ -6897,6 +6954,12 @@ function on(event, handler) end
 ---@overload fun(event: "player.harvest_block", filter: table, handler: fun(e: basalt.event.player_harvest_block))
 ---@overload fun(event: "player.bucket_entity", handler: fun(e: basalt.event.player_bucket_entity))
 ---@overload fun(event: "player.bucket_entity", filter: table, handler: fun(e: basalt.event.player_bucket_entity))
+---@overload fun(event: "block.dispense_loot", handler: fun(e: basalt.event.block_dispense_loot))
+---@overload fun(event: "block.dispense_loot", filter: table, handler: fun(e: basalt.event.block_dispense_loot))
+---@overload fun(event: "block.vault_display_item", handler: fun(e: basalt.event.block_vault_display_item))
+---@overload fun(event: "block.vault_display_item", filter: table, handler: fun(e: basalt.event.block_vault_display_item))
+---@overload fun(event: "block.vault_change_state", handler: fun(e: basalt.event.block_vault_change_state))
+---@overload fun(event: "block.vault_change_state", filter: table, handler: fun(e: basalt.event.block_vault_change_state))
 ---@overload fun(event: string, handler: fun(e: table))
 ---@param event string
 ---@param handler fun(e: table)
