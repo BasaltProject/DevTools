@@ -3913,8 +3913,8 @@ function _:cancel(message) end
 ---@field cause string
 ---@field amount number (the handler may change it)
 ---@field attacker_name string
----@field attacker_id any
----@field direct_id any
+---@field attacker_id integer
+---@field direct_id integer
 local _ = {}
 
 ---@param message? string
@@ -3932,7 +3932,7 @@ function _:cancel(message) end
 ---@field y number
 ---@field z number
 ---@field killer_name string
----@field killer_id any
+---@field killer_id integer
 local _ = {}
 
 ---@class basalt.event.server_tick
@@ -4373,7 +4373,7 @@ function _:cancel(message) end
 ---@field recipe string
 ---@field result string (the handler may change it)
 ---@field name any
----@field cost any (the handler may change it)
+---@field cost integer (the handler may change it)
 local _ = {}
 
 ---@class basalt.event.inventory_take
@@ -4404,7 +4404,7 @@ function _:cancel(message) end
 ---@field y number
 ---@field z number
 ---@field item string
----@field bookshelves any
+---@field bookshelves integer
 ---@field offers any (the handler may change it)
 local _ = {}
 
@@ -4424,7 +4424,7 @@ function _:cancel(message) end
 ---@field z number
 ---@field item string
 ---@field button integer
----@field cost any (the handler may change it)
+---@field cost integer (the handler may change it)
 ---@field enchants any (the handler may change it)
 local _ = {}
 
@@ -4441,7 +4441,7 @@ function _:cancel(message) end
 ---@field z number
 ---@field cooker string
 ---@field fuel string
----@field burn_time any (the handler may change it)
+---@field burn_time integer (the handler may change it)
 local _ = {}
 
 ---@param message? string
@@ -4457,7 +4457,7 @@ function _:cancel(message) end
 ---@field z number
 ---@field cooker string
 ---@field source string
----@field total any
+---@field total integer
 ---@field recipe string
 local _ = {}
 
@@ -4649,7 +4649,7 @@ local _ = {}
 ---@field z number
 ---@field drops string (the handler may change it)
 ---@field exp integer (the handler may change it)
----@field killer_id any
+---@field killer_id integer
 local _ = {}
 
 ---@class basalt.event.entity_launch
@@ -4663,7 +4663,7 @@ local _ = {}
 ---@field x number
 ---@field y number
 ---@field z number
----@field shooter_id any
+---@field shooter_id integer
 local _ = {}
 
 ---@param message? string
@@ -4677,7 +4677,7 @@ function _:cancel(message) end
 ---@field entity_type string
 ---@field world string
 ---@field amount number (the handler may change it)
----@field attacker_id any
+---@field attacker_id integer
 local _ = {}
 
 ---@param message? string
@@ -4690,7 +4690,7 @@ function _:cancel(message) end
 ---@field entity_id integer
 ---@field entity_type string
 ---@field world string
----@field attacker_id any
+---@field attacker_id integer
 local _ = {}
 
 ---@param message? string
@@ -4730,8 +4730,8 @@ local _ = {}
 ---@field entity_id integer
 ---@field entity_type string
 ---@field world string
----@field target_id any (the handler may change it)
----@field previous_id any
+---@field target_id integer (the handler may change it)
+---@field previous_id integer
 ---@field reason string
 local _ = {}
 
@@ -6027,7 +6027,7 @@ function _:cancel(message) end
 ---@class basalt.event.server_data_reload
 ---@field name string
 ---@field cancelled boolean
----@field generation any
+---@field generation integer
 local _ = {}
 
 ---@class basalt.event.inventory_pickup_item
@@ -6117,6 +6117,9 @@ function _:cancel(message) end
 ---@field power number (the handler may change it)
 ---@field dir_x number (the handler may change it)
 ---@field dir_z number (the handler may change it)
+---@field kx number (the handler may change it)
+---@field ky number (the handler may change it)
+---@field kz number (the handler may change it)
 local _ = {}
 
 ---@param message? string
@@ -6130,9 +6133,9 @@ function _:cancel(message) end
 ---@field player_name string
 ---@field player_uuid string
 ---@field world string
----@field x number
----@field y number
----@field z number
+---@field x number (the handler may change it)
+---@field y number (the handler may change it)
+---@field z number (the handler may change it)
 ---@field cause string
 local _ = {}
 
@@ -6154,6 +6157,24 @@ function _:cancel(message) end
 ---@field hand string
 ---@field item string
 ---@field count integer (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.player_bucket_entity
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field entity basalt.Entity?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field entity_id integer
+---@field entity_type string
+---@field hand string
+---@field original_item string
+---@field item string (the handler may change it)
 local _ = {}
 
 ---@param message? string
@@ -6513,6 +6534,8 @@ function _:cancel(message) end
 ---@overload fun(event: "player.spawn_change", filter: table, handler: fun(e: basalt.event.player_spawn_change))
 ---@overload fun(event: "player.harvest_block", handler: fun(e: basalt.event.player_harvest_block))
 ---@overload fun(event: "player.harvest_block", filter: table, handler: fun(e: basalt.event.player_harvest_block))
+---@overload fun(event: "player.bucket_entity", handler: fun(e: basalt.event.player_bucket_entity))
+---@overload fun(event: "player.bucket_entity", filter: table, handler: fun(e: basalt.event.player_bucket_entity))
 ---@overload fun(event: string, handler: fun(e: table))
 ---@param event string
 ---@param handler fun(e: table)
@@ -6872,6 +6895,8 @@ function on(event, handler) end
 ---@overload fun(event: "player.spawn_change", filter: table, handler: fun(e: basalt.event.player_spawn_change))
 ---@overload fun(event: "player.harvest_block", handler: fun(e: basalt.event.player_harvest_block))
 ---@overload fun(event: "player.harvest_block", filter: table, handler: fun(e: basalt.event.player_harvest_block))
+---@overload fun(event: "player.bucket_entity", handler: fun(e: basalt.event.player_bucket_entity))
+---@overload fun(event: "player.bucket_entity", filter: table, handler: fun(e: basalt.event.player_bucket_entity))
 ---@overload fun(event: string, handler: fun(e: table))
 ---@param event string
 ---@param handler fun(e: table)
