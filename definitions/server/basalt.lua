@@ -6220,6 +6220,125 @@ function _:cancel(message) end
 ---@field entity basalt.Entity?
 ---@field player_name string
 ---@field player_uuid string
+---@class basalt.event.block_loot_generate
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field pos basalt.Position
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field table string
+---@field loot string (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.player_loot_replenish
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field pos basalt.Position
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field table string
+---@field can_loot boolean (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.player_trade
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field villager_id integer
+---@field cost_a string (the handler may change it)
+---@field cost_a_count integer (the handler may change it)
+---@field cost_b string (the handler may change it)
+---@field cost_b_count integer (the handler may change it)
+---@field result string (the handler may change it)
+---@field result_count integer (the handler may change it)
+---@field uses integer (the handler may change it)
+---@field max_uses integer (the handler may change it)
+---@field experience integer (the handler may change it)
+---@field price_multiplier number (the handler may change it)
+---@field demand integer (the handler may change it)
+---@field special_price integer (the handler may change it)
+---@field reward_exp boolean (the handler may change it)
+---@field increase_uses boolean (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.entity_villager_acquire_trade
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field cost_a string (the handler may change it)
+---@field cost_a_count integer (the handler may change it)
+---@field cost_b string (the handler may change it)
+---@field cost_b_count integer (the handler may change it)
+---@field result string (the handler may change it)
+---@field result_count integer (the handler may change it)
+---@field uses integer (the handler may change it)
+---@field max_uses integer (the handler may change it)
+---@field experience integer (the handler may change it)
+---@field price_multiplier number (the handler may change it)
+---@field demand integer (the handler may change it)
+---@field special_price integer (the handler may change it)
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.entity_villager_replenish_trade
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field cost_a string
+---@field cost_a_count integer
+---@field cost_b string
+---@field cost_b_count integer
+---@field result string
+---@field result_count integer
+---@field uses integer
+---@field max_uses integer
+---@field experience integer
+---@field price_multiplier number
+---@field demand integer
+---@field special_price integer
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
 ---@field world string
 ---@field entity_id integer
 ---@field entity_type string
@@ -6600,6 +6719,16 @@ function on(event, handler) end
 
 ---@overload fun(event: "player.join", handler: fun(e: basalt.event.player_join))
 ---@overload fun(event: "player.join", filter: table, handler: fun(e: basalt.event.player_join))
+---@overload fun(event: "block.loot_generate", handler: fun(e: basalt.event.block_loot_generate))
+---@overload fun(event: "block.loot_generate", filter: table, handler: fun(e: basalt.event.block_loot_generate))
+---@overload fun(event: "player.loot_replenish", handler: fun(e: basalt.event.player_loot_replenish))
+---@overload fun(event: "player.loot_replenish", filter: table, handler: fun(e: basalt.event.player_loot_replenish))
+---@overload fun(event: "player.trade", handler: fun(e: basalt.event.player_trade))
+---@overload fun(event: "player.trade", filter: table, handler: fun(e: basalt.event.player_trade))
+---@overload fun(event: "entity.villager_acquire_trade", handler: fun(e: basalt.event.entity_villager_acquire_trade))
+---@overload fun(event: "entity.villager_acquire_trade", filter: table, handler: fun(e: basalt.event.entity_villager_acquire_trade))
+---@overload fun(event: "entity.villager_replenish_trade", handler: fun(e: basalt.event.entity_villager_replenish_trade))
+---@overload fun(event: "entity.villager_replenish_trade", filter: table, handler: fun(e: basalt.event.entity_villager_replenish_trade))
 ---@overload fun(event: "player.quit", handler: fun(e: basalt.event.player_quit))
 ---@overload fun(event: "player.quit", filter: table, handler: fun(e: basalt.event.player_quit))
 ---@overload fun(event: "player.chat", handler: fun(e: basalt.event.player_chat))
@@ -6967,6 +7096,16 @@ function watch(event, handler) end
 
 ---@class basalt.data
 data = {}
+---@overload fun(event: "block.loot_generate", handler: fun(e: basalt.event.block_loot_generate))
+---@overload fun(event: "block.loot_generate", filter: table, handler: fun(e: basalt.event.block_loot_generate))
+---@overload fun(event: "player.loot_replenish", handler: fun(e: basalt.event.player_loot_replenish))
+---@overload fun(event: "player.loot_replenish", filter: table, handler: fun(e: basalt.event.player_loot_replenish))
+---@overload fun(event: "player.trade", handler: fun(e: basalt.event.player_trade))
+---@overload fun(event: "player.trade", filter: table, handler: fun(e: basalt.event.player_trade))
+---@overload fun(event: "entity.villager_acquire_trade", handler: fun(e: basalt.event.entity_villager_acquire_trade))
+---@overload fun(event: "entity.villager_acquire_trade", filter: table, handler: fun(e: basalt.event.entity_villager_acquire_trade))
+---@overload fun(event: "entity.villager_replenish_trade", handler: fun(e: basalt.event.entity_villager_replenish_trade))
+---@overload fun(event: "entity.villager_replenish_trade", filter: table, handler: fun(e: basalt.event.entity_villager_replenish_trade))
 
 ---@type table<string, any>
 store = {}
