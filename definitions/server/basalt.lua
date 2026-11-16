@@ -4177,6 +4177,9 @@ function _:cancel(message) end
 ---@field y number
 ---@field z number
 ---@field reason string
+---@field spawner_x any
+---@field spawner_y any
+---@field spawner_z any
 local _ = {}
 
 ---@param message? string
@@ -6224,6 +6227,7 @@ function _:cancel(message) end
 ---@field x number
 ---@field y number
 ---@field z number
+---@field entity_id any
 ---@field table string
 ---@field loot string (the handler may change it)
 local _ = {}
@@ -6374,10 +6378,11 @@ local _ = {}
 ---@field x number
 ---@field y number
 ---@field z number
+---@field entity_id any
 ---@field reason string
 ---@field old_level any
 ---@field new_level any
----@field new_block any
+---@field new_block any (the handler may change it)
 local _ = {}
 
 ---@class basalt.event.entity_break_door
