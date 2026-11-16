@@ -6523,6 +6523,23 @@ local _ = {}
 ---@field hatch_type string (the handler may change it)
 local _ = {}
 
+---@class basalt.event.entity_egg_hatch
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field hatching boolean (the handler may change it)
+---@field count integer (the handler may change it)
+---@field hatch_type string (the handler may change it)
+local _ = {}
+
 ---@class basalt.event.player_sign_open
 ---@field name string
 ---@field cancelled boolean
@@ -6949,6 +6966,8 @@ local _ = {}
 ---@overload fun(event: "entity.sheep_dye", filter: table, handler: fun(e: basalt.event.entity_sheep_dye))
 ---@overload fun(event: "player.egg_throw", handler: fun(e: basalt.event.player_egg_throw))
 ---@overload fun(event: "player.egg_throw", filter: table, handler: fun(e: basalt.event.player_egg_throw))
+---@overload fun(event: "entity.egg_hatch", handler: fun(e: basalt.event.entity_egg_hatch))
+---@overload fun(event: "entity.egg_hatch", filter: table, handler: fun(e: basalt.event.entity_egg_hatch))
 ---@overload fun(event: "player.sign_open", handler: fun(e: basalt.event.player_sign_open))
 ---@overload fun(event: "player.sign_open", filter: table, handler: fun(e: basalt.event.player_sign_open))
 ---@overload fun(event: "player.input", handler: fun(e: basalt.event.player_input))
@@ -7352,6 +7371,8 @@ function on(event, handler) end
 ---@overload fun(event: "entity.sheep_dye", filter: table, handler: fun(e: basalt.event.entity_sheep_dye))
 ---@overload fun(event: "player.egg_throw", handler: fun(e: basalt.event.player_egg_throw))
 ---@overload fun(event: "player.egg_throw", filter: table, handler: fun(e: basalt.event.player_egg_throw))
+---@overload fun(event: "entity.egg_hatch", handler: fun(e: basalt.event.entity_egg_hatch))
+---@overload fun(event: "entity.egg_hatch", filter: table, handler: fun(e: basalt.event.entity_egg_hatch))
 ---@overload fun(event: "player.sign_open", handler: fun(e: basalt.event.player_sign_open))
 ---@overload fun(event: "player.sign_open", filter: table, handler: fun(e: basalt.event.player_sign_open))
 ---@overload fun(event: "player.input", handler: fun(e: basalt.event.player_input))
