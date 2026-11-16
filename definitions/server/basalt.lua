@@ -2600,6 +2600,18 @@ function worlds.block_info(id) end
 ---@return number[]
 function worlds.block_shape(id) end
 
+---The selection (outline) boxes of a block state at a column, six numbers per box (min corner, then max corner) in blocks, with the plant offset applied.
+---@param id integer
+---@param x? integer
+---@param z? integer
+---@return number[]
+function worlds.block_outline(id, x, z) end
+
+---The visual boxes of a block state, six numbers per box (min corner, then max corner) in blocks.
+---@param id integer
+---@return number[]
+function worlds.block_visual(id) end
+
 ---Which blocks own a block entity: block id to the id of its block entity type.
 ---@return table<string, string>
 function worlds.block_entity_types() end
