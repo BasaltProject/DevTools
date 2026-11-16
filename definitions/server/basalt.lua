@@ -1905,6 +1905,12 @@ function World:entity_nbt(entity) end
 ---@return basalt.Entity?
 function World:spawn_nbt(snbt, cause) end
 
+---Applies saved SNBT to a live entity in place, as `/data merge entity` does; false for players and malformed tags.
+---@param entity basalt.Entity|integer An entity or its id.
+---@param snbt string
+---@return boolean
+function World:set_entity_nbt(entity, snbt) end
+
 ---Takes the entity with this uuid out of the world.
 ---@param uuid string
 ---@return boolean removed False when no live entity has that uuid.
