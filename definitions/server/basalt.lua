@@ -6213,13 +6213,6 @@ local _ = {}
 ---@param message? string
 function _:cancel(message) end
 
----@class basalt.event.player_bucket_entity
----@field name string
----@field cancelled boolean
----@field player basalt.Player?
----@field entity basalt.Entity?
----@field player_name string
----@field player_uuid string
 ---@class basalt.event.block_loot_generate
 ---@field name string
 ---@field cancelled boolean
@@ -6339,6 +6332,13 @@ local _ = {}
 ---@param message? string
 function _:cancel(message) end
 
+---@class basalt.event.player_bucket_entity
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field entity basalt.Entity?
+---@field player_name string
+---@field player_uuid string
 ---@field world string
 ---@field entity_id integer
 ---@field entity_type string
@@ -6350,6 +6350,124 @@ local _ = {}
 ---@param message? string
 function _:cancel(message) end
 
+---@class basalt.event.block_brewing_fuel
+---@field name string
+---@field cancelled boolean
+---@field pos basalt.Position
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field item string
+---@field fuel_power any (the handler may change it)
+---@field consuming any (the handler may change it)
+local _ = {}
+
+---@class basalt.event.block_cauldron_level
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field pos basalt.Position
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field reason string
+---@field old_level any
+---@field new_level any
+---@field new_block any
+local _ = {}
+
+---@class basalt.event.entity_break_door
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field block string
+local _ = {}
+
+---@class basalt.event.entity_pose_change
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field entity_id integer
+---@field entity_type string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field pose any
+---@field old_pose any
+local _ = {}
+
+---@class basalt.event.player_armor_stand_manipulate
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field entity basalt.Entity?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field entity_id integer
+---@field slot integer
+---@field hand string
+---@field item string
+---@field count integer
+---@field stand_item any
+---@field stand_count any
+local _ = {}
+
+---@class basalt.event.player_flower_pot
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field pos basalt.Position
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field item string
+---@field placing any
+local _ = {}
+
+---@class basalt.event.player_item_mend
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field slot integer
+---@field orb_id integer
+---@field repair any (the handler may change it)
+---@field consumed any
+local _ = {}
+
+---@class basalt.event.player_lectern_insert
+---@field name string
+---@field cancelled boolean
+---@field player basalt.Player?
+---@field pos basalt.Position
+---@field player_name string
+---@field player_uuid string
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field item string
+local _ = {}
+
 ---@overload fun(event: "player.join", handler: fun(e: basalt.event.player_join))
 ---@overload fun(event: "player.join", filter: table, handler: fun(e: basalt.event.player_join))
 ---@overload fun(event: "player.quit", handler: fun(e: basalt.event.player_quit))
@@ -6712,6 +6830,32 @@ function _:cancel(message) end
 ---@overload fun(event: "block.vault_display_item", filter: table, handler: fun(e: basalt.event.block_vault_display_item))
 ---@overload fun(event: "block.vault_change_state", handler: fun(e: basalt.event.block_vault_change_state))
 ---@overload fun(event: "block.vault_change_state", filter: table, handler: fun(e: basalt.event.block_vault_change_state))
+---@overload fun(event: "block.loot_generate", handler: fun(e: basalt.event.block_loot_generate))
+---@overload fun(event: "block.loot_generate", filter: table, handler: fun(e: basalt.event.block_loot_generate))
+---@overload fun(event: "player.loot_replenish", handler: fun(e: basalt.event.player_loot_replenish))
+---@overload fun(event: "player.loot_replenish", filter: table, handler: fun(e: basalt.event.player_loot_replenish))
+---@overload fun(event: "player.trade", handler: fun(e: basalt.event.player_trade))
+---@overload fun(event: "player.trade", filter: table, handler: fun(e: basalt.event.player_trade))
+---@overload fun(event: "entity.villager_acquire_trade", handler: fun(e: basalt.event.entity_villager_acquire_trade))
+---@overload fun(event: "entity.villager_acquire_trade", filter: table, handler: fun(e: basalt.event.entity_villager_acquire_trade))
+---@overload fun(event: "entity.villager_replenish_trade", handler: fun(e: basalt.event.entity_villager_replenish_trade))
+---@overload fun(event: "entity.villager_replenish_trade", filter: table, handler: fun(e: basalt.event.entity_villager_replenish_trade))
+---@overload fun(event: "player.item_mend", handler: fun(e: basalt.event.player_item_mend))
+---@overload fun(event: "player.item_mend", filter: table, handler: fun(e: basalt.event.player_item_mend))
+---@overload fun(event: "block.cauldron_level", handler: fun(e: basalt.event.block_cauldron_level))
+---@overload fun(event: "block.cauldron_level", filter: table, handler: fun(e: basalt.event.block_cauldron_level))
+---@overload fun(event: "player.flower_pot", handler: fun(e: basalt.event.player_flower_pot))
+---@overload fun(event: "player.flower_pot", filter: table, handler: fun(e: basalt.event.player_flower_pot))
+---@overload fun(event: "player.lectern_insert", handler: fun(e: basalt.event.player_lectern_insert))
+---@overload fun(event: "player.lectern_insert", filter: table, handler: fun(e: basalt.event.player_lectern_insert))
+---@overload fun(event: "block.brewing_fuel", handler: fun(e: basalt.event.block_brewing_fuel))
+---@overload fun(event: "block.brewing_fuel", filter: table, handler: fun(e: basalt.event.block_brewing_fuel))
+---@overload fun(event: "player.armor_stand_manipulate", handler: fun(e: basalt.event.player_armor_stand_manipulate))
+---@overload fun(event: "player.armor_stand_manipulate", filter: table, handler: fun(e: basalt.event.player_armor_stand_manipulate))
+---@overload fun(event: "entity.break_door", handler: fun(e: basalt.event.entity_break_door))
+---@overload fun(event: "entity.break_door", filter: table, handler: fun(e: basalt.event.entity_break_door))
+---@overload fun(event: "entity.pose_change", handler: fun(e: basalt.event.entity_pose_change))
+---@overload fun(event: "entity.pose_change", filter: table, handler: fun(e: basalt.event.entity_pose_change))
 ---@overload fun(event: string, handler: fun(e: table))
 ---@param event string
 ---@param handler fun(e: table)
@@ -6719,16 +6863,6 @@ function on(event, handler) end
 
 ---@overload fun(event: "player.join", handler: fun(e: basalt.event.player_join))
 ---@overload fun(event: "player.join", filter: table, handler: fun(e: basalt.event.player_join))
----@overload fun(event: "block.loot_generate", handler: fun(e: basalt.event.block_loot_generate))
----@overload fun(event: "block.loot_generate", filter: table, handler: fun(e: basalt.event.block_loot_generate))
----@overload fun(event: "player.loot_replenish", handler: fun(e: basalt.event.player_loot_replenish))
----@overload fun(event: "player.loot_replenish", filter: table, handler: fun(e: basalt.event.player_loot_replenish))
----@overload fun(event: "player.trade", handler: fun(e: basalt.event.player_trade))
----@overload fun(event: "player.trade", filter: table, handler: fun(e: basalt.event.player_trade))
----@overload fun(event: "entity.villager_acquire_trade", handler: fun(e: basalt.event.entity_villager_acquire_trade))
----@overload fun(event: "entity.villager_acquire_trade", filter: table, handler: fun(e: basalt.event.entity_villager_acquire_trade))
----@overload fun(event: "entity.villager_replenish_trade", handler: fun(e: basalt.event.entity_villager_replenish_trade))
----@overload fun(event: "entity.villager_replenish_trade", filter: table, handler: fun(e: basalt.event.entity_villager_replenish_trade))
 ---@overload fun(event: "player.quit", handler: fun(e: basalt.event.player_quit))
 ---@overload fun(event: "player.quit", filter: table, handler: fun(e: basalt.event.player_quit))
 ---@overload fun(event: "player.chat", handler: fun(e: basalt.event.player_chat))
@@ -7089,13 +7223,6 @@ function on(event, handler) end
 ---@overload fun(event: "block.vault_display_item", filter: table, handler: fun(e: basalt.event.block_vault_display_item))
 ---@overload fun(event: "block.vault_change_state", handler: fun(e: basalt.event.block_vault_change_state))
 ---@overload fun(event: "block.vault_change_state", filter: table, handler: fun(e: basalt.event.block_vault_change_state))
----@overload fun(event: string, handler: fun(e: table))
----@param event string
----@param handler fun(e: table)
-function watch(event, handler) end
-
----@class basalt.data
-data = {}
 ---@overload fun(event: "block.loot_generate", handler: fun(e: basalt.event.block_loot_generate))
 ---@overload fun(event: "block.loot_generate", filter: table, handler: fun(e: basalt.event.block_loot_generate))
 ---@overload fun(event: "player.loot_replenish", handler: fun(e: basalt.event.player_loot_replenish))
@@ -7106,6 +7233,29 @@ data = {}
 ---@overload fun(event: "entity.villager_acquire_trade", filter: table, handler: fun(e: basalt.event.entity_villager_acquire_trade))
 ---@overload fun(event: "entity.villager_replenish_trade", handler: fun(e: basalt.event.entity_villager_replenish_trade))
 ---@overload fun(event: "entity.villager_replenish_trade", filter: table, handler: fun(e: basalt.event.entity_villager_replenish_trade))
+---@overload fun(event: "player.item_mend", handler: fun(e: basalt.event.player_item_mend))
+---@overload fun(event: "player.item_mend", filter: table, handler: fun(e: basalt.event.player_item_mend))
+---@overload fun(event: "block.cauldron_level", handler: fun(e: basalt.event.block_cauldron_level))
+---@overload fun(event: "block.cauldron_level", filter: table, handler: fun(e: basalt.event.block_cauldron_level))
+---@overload fun(event: "player.flower_pot", handler: fun(e: basalt.event.player_flower_pot))
+---@overload fun(event: "player.flower_pot", filter: table, handler: fun(e: basalt.event.player_flower_pot))
+---@overload fun(event: "player.lectern_insert", handler: fun(e: basalt.event.player_lectern_insert))
+---@overload fun(event: "player.lectern_insert", filter: table, handler: fun(e: basalt.event.player_lectern_insert))
+---@overload fun(event: "block.brewing_fuel", handler: fun(e: basalt.event.block_brewing_fuel))
+---@overload fun(event: "block.brewing_fuel", filter: table, handler: fun(e: basalt.event.block_brewing_fuel))
+---@overload fun(event: "player.armor_stand_manipulate", handler: fun(e: basalt.event.player_armor_stand_manipulate))
+---@overload fun(event: "player.armor_stand_manipulate", filter: table, handler: fun(e: basalt.event.player_armor_stand_manipulate))
+---@overload fun(event: "entity.break_door", handler: fun(e: basalt.event.entity_break_door))
+---@overload fun(event: "entity.break_door", filter: table, handler: fun(e: basalt.event.entity_break_door))
+---@overload fun(event: "entity.pose_change", handler: fun(e: basalt.event.entity_pose_change))
+---@overload fun(event: "entity.pose_change", filter: table, handler: fun(e: basalt.event.entity_pose_change))
+---@overload fun(event: string, handler: fun(e: table))
+---@param event string
+---@param handler fun(e: table)
+function watch(event, handler) end
+
+---@class basalt.data
+data = {}
 
 ---@type table<string, any>
 store = {}
