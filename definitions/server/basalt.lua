@@ -1439,7 +1439,63 @@ function Source:send(message, vars) end
 ---@field y number
 ---@field z number
 ---@field alive boolean
+---@field audience string[]? The uuids it is shown to; nil when everyone sees it.
+---@field health number Only a fake player holds health.
+---@field max_health number
+---@field flags integer The shared entity flags byte of a fake player.
+---@field pose integer The `Pose` ordinal of a fake player.
+---@field held_slot integer The hotbar slot a fake player holds, 0 to 8; settable.
 local NPC = {}
+
+---Sets the skin from a signed texture, or from the name of a player who is online.
+---@param texture string|{ name: string }
+---@param signature? string
+---@return boolean
+function NPC:skin(texture, signature) end
+
+---@param player_name string
+---@return boolean
+function NPC:skin_from(player_name) end
+
+---@param follows? boolean
+function NPC:looks_at_players(follows) end
+
+---@param yaw number
+---@param pitch? number
+function NPC:look(yaw, pitch) end
+
+---@overload fun(self: basalt.NPC, where: basalt.Where): boolean
+---@param x number
+---@param y number
+---@param z number
+---@return boolean
+function NPC:teleport(x, y, z) end
+
+---@param players basalt.Player[]|string[]
+function NPC:show_only_to(players) end
+
+function NPC:show_to_all() end
+
+---Reads an attribute of a fake player, or sets its base value when `value` is given; setting returns false for an attribute it does not have.
+---@param name string
+---@param value? number
+---@return number|boolean|nil
+function NPC:attribute(name, value) end
+
+---Puts an item in a slot of a fake player (Bukkit numbers: 0 to 8 hotbar, 36 to 39 feet to head, 40 off hand); nil clears it.
+---@param slot integer
+---@param item? string
+---@param count? integer
+---@return boolean
+function NPC:equip(slot, item, count) end
+
+---@param slot integer
+---@return string? item
+---@return integer? count
+function NPC:item(slot) end
+
+---@param action? integer A `ClientboundAnimatePacket` action id.
+function NPC:animate(action) end
 
 function NPC:remove() end
 
@@ -1693,6 +1749,11 @@ function World:hologram(text, where) end
 ---@param options table
 ---@return basalt.NPC?
 function World:npc(options) end
+
+---A session-less player entity the plugin drives itself; it needs `name` and `pos`, and takes `uuid` and `skin = { texture, signature }`.
+---@param options { name: string, pos: basalt.Where, uuid?: string, skin?: { texture: string, signature?: string } }
+---@return basalt.NPC?
+function World:fake_player(options) end
 
 ---Block state ids of a section, 4096 of them, index = y * 256 + z * 16 + x, from 1.
 ---@param chunk_x integer
@@ -2291,6 +2352,20 @@ function fill(text, player) end
 ---@param name string
 ---@param fn fun(player: basalt.Player?): string
 function placeholder(name, fn) end
+
+---@class basalt.Profile
+---@field uuid string
+---@field name string
+---@field texture string The signed `textures` property value, empty when the account has none.
+---@field signature string
+
+---@class basalt.profiles
+profiles = {}
+
+---Looks a player name up on Mojang's services without stopping the server; `fn` runs later with the profile, or nil when the name is unknown or the services are unreachable.
+---@param name string
+---@param fn fun(profile: basalt.Profile?)
+function profiles.lookup(name, fn) end
 
 ---@class basalt.PermissionSubject
 ---@field name string
@@ -5536,6 +5611,48 @@ local _ = {}
 ---@param message? string
 function _:cancel(message) end
 
+---@class basalt.event.block_bell_resonate
+---@field name string
+---@field pos basalt.Position
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field entities string Comma separated ids of the raiders the bell reveals; the handler may keep fewer.
+local _ = {}
+
+---@class basalt.event.block_bell_reveal_raider
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field entity_id integer
+---@field entity_type string
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
+---@class basalt.event.block_dispense_armor
+---@field name string
+---@field cancelled boolean
+---@field entity basalt.Entity?
+---@field pos basalt.Position
+---@field world string
+---@field x number
+---@field y number
+---@field z number
+---@field entity_id integer The mob or armor stand the dispenser equips.
+---@field item string
+local _ = {}
+
+---@param message? string
+function _:cancel(message) end
+
 ---@class basalt.event.entity_toggle_glide
 ---@field name string
 ---@field cancelled boolean
@@ -7245,6 +7362,12 @@ local _ = {}
 ---@overload fun(event: "block.moisture_change", filter: table, handler: fun(e: basalt.event.block_moisture_change))
 ---@overload fun(event: "block.bell_ring", handler: fun(e: basalt.event.block_bell_ring))
 ---@overload fun(event: "block.bell_ring", filter: table, handler: fun(e: basalt.event.block_bell_ring))
+---@overload fun(event: "block.bell_resonate", handler: fun(e: basalt.event.block_bell_resonate))
+---@overload fun(event: "block.bell_resonate", filter: table, handler: fun(e: basalt.event.block_bell_resonate))
+---@overload fun(event: "block.bell_reveal_raider", handler: fun(e: basalt.event.block_bell_reveal_raider))
+---@overload fun(event: "block.bell_reveal_raider", filter: table, handler: fun(e: basalt.event.block_bell_reveal_raider))
+---@overload fun(event: "block.dispense_armor", handler: fun(e: basalt.event.block_dispense_armor))
+---@overload fun(event: "block.dispense_armor", filter: table, handler: fun(e: basalt.event.block_dispense_armor))
 ---@overload fun(event: "entity.toggle_glide", handler: fun(e: basalt.event.entity_toggle_glide))
 ---@overload fun(event: "entity.toggle_glide", filter: table, handler: fun(e: basalt.event.entity_toggle_glide))
 ---@overload fun(event: "entity.air_change", handler: fun(e: basalt.event.entity_air_change))
@@ -7700,6 +7823,12 @@ function on(event, handler) end
 ---@overload fun(event: "block.moisture_change", filter: table, handler: fun(e: basalt.event.block_moisture_change))
 ---@overload fun(event: "block.bell_ring", handler: fun(e: basalt.event.block_bell_ring))
 ---@overload fun(event: "block.bell_ring", filter: table, handler: fun(e: basalt.event.block_bell_ring))
+---@overload fun(event: "block.bell_resonate", handler: fun(e: basalt.event.block_bell_resonate))
+---@overload fun(event: "block.bell_resonate", filter: table, handler: fun(e: basalt.event.block_bell_resonate))
+---@overload fun(event: "block.bell_reveal_raider", handler: fun(e: basalt.event.block_bell_reveal_raider))
+---@overload fun(event: "block.bell_reveal_raider", filter: table, handler: fun(e: basalt.event.block_bell_reveal_raider))
+---@overload fun(event: "block.dispense_armor", handler: fun(e: basalt.event.block_dispense_armor))
+---@overload fun(event: "block.dispense_armor", filter: table, handler: fun(e: basalt.event.block_dispense_armor))
 ---@overload fun(event: "entity.toggle_glide", handler: fun(e: basalt.event.entity_toggle_glide))
 ---@overload fun(event: "entity.toggle_glide", filter: table, handler: fun(e: basalt.event.entity_toggle_glide))
 ---@overload fun(event: "entity.air_change", handler: fun(e: basalt.event.entity_air_change))
