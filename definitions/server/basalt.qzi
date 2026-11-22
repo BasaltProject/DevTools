@@ -1,0 +1,3434 @@
+package org.basaltmc.server
+
+fn print(text: str)
+fn logInfo(text: str)
+fn logWarn(text: str)
+fn logError(text: str)
+fn pluginId() -> str
+fn pluginName() -> str
+fn pluginVersion() -> str
+
+@handle
+@awaitable
+struct Delay {}
+
+impl int {
+    @property
+    fn ticks(self) -> Delay
+    @property
+    fn seconds(self) -> Delay
+    @property
+    fn minutes(self) -> Delay
+}
+
+fn serverTick() -> int
+
+fn setCancelled(value: bool)
+fn setMessage(text: str)
+
+@handle
+struct Player {
+    name: str,
+    uuid: str,
+    world: str,
+    gamemode: str,
+    address: str,
+    level: int,
+    food: int,
+    ping: int,
+    permissionLevel: int,
+    health: float,
+    x: float,
+    y: float,
+    z: float,
+    yaw: float,
+    pitch: float,
+    sneaking: bool,
+    flying: bool,
+    onGround: bool
+}
+
+impl Player {
+    fn send(self, message: str)
+    fn actionBar(self, message: str)
+    fn title(self, title: str, subtitle: str)
+    fn kick(self, reason: str)
+    fn teleport(self, world: str, x: float, y: float, z: float) -> bool
+    fn setHealth(self, value: float)
+    fn setFood(self, value: int)
+    fn setLevel(self, value: int)
+    fn setGamemode(self, mode: str)
+    fn give(self, item: str, count: int) -> bool
+    fn heldItem(self) -> str
+    fn hasPermission(self, node: str) -> bool
+    fn sound(self, name: str, volume: float, pitch: float)
+}
+
+fn playerCount() -> int
+fn onlinePlayers() -> [Player]
+fn playerNamed(name: str) -> Player?
+fn playerByUuid(uuid: str) -> Player?
+fn isOnline(p: Player) -> bool
+fn broadcast(message: str)
+fn runConsole(command: str) -> bool
+
+@handle
+struct CommandCall {
+    sender: str,
+    world: str,
+    kind: str,
+    isConsole: bool
+}
+
+impl CommandCall {
+    fn reply(self, message: str)
+    fn text(self, name: str) -> str
+    fn integer(self, name: str) -> int
+    fn decimal(self, name: str) -> float
+    fn flag(self, name: str) -> bool
+    fn player(self) -> Player?
+}
+
+fn configStr(key: str, fallback: str) -> str
+fn configInt(key: str, fallback: int) -> int
+fn configFloat(key: str, fallback: float) -> float
+fn configBool(key: str, fallback: bool) -> bool
+fn fileExists(path: str) -> bool
+fn fileRead(path: str) -> str
+fn fileWrite(path: str, text: str) -> bool
+
+@handle
+struct World {
+    name: str,
+    dimension: str,
+    difficulty: str,
+    time: int,
+    dayTime: int,
+    seed: int,
+    raining: bool,
+    thundering: bool
+}
+
+impl World {
+    fn blockAt(self, x: int, y: int, z: int) -> str
+    fn setBlock(self, x: int, y: int, z: int, block: str) -> bool
+    fn setDayTime(self, ticks: int)
+    fn setWeather(self, raining: bool, thundering: bool)
+    fn gameRule(self, name: str) -> str
+    fn setGameRule(self, name: str, value: str) -> bool
+}
+
+fn worldNamed(name: str) -> World?
+fn defaultWorld() -> World?
+fn worldCount() -> int
+
+@handle
+struct DataRows {
+    count: int,
+    columns: int
+}
+
+impl DataRows {
+    fn cell(self, row: int, column: int) -> str
+}
+
+@handle
+struct Entity {
+    id: int,
+    type: str,
+    world: str,
+    uuid: str,
+    x: float,
+    y: float,
+    z: float,
+    yaw: float,
+    pitch: float,
+    vx: float,
+    vy: float,
+    vz: float,
+    health: float,
+    width: float,
+    height: float,
+    age: int,
+    alive: bool,
+    onGround: bool,
+    isPlayer: bool,
+    customName: str
+}
+
+impl Entity {
+    fn remove(self)
+    fn teleport(self, x: float, y: float, z: float) -> bool
+    fn setHealth(self, value: float)
+    fn setRotation(self, yaw: float, pitch: float) -> bool
+    fn setVelocity(self, x: float, y: float, z: float) -> bool
+    fn player(self) -> Player?
+
+    fn has(self, name: str) -> bool
+    fn getBool(self, name: str) -> bool
+    fn getInt(self, name: str) -> int
+    fn getFloat(self, name: str) -> float
+    fn getStr(self, name: str) -> str
+    fn getRows(self, name: str) -> DataRows
+    fn setBool(self, name: str, value: bool) -> bool
+    fn setInt(self, name: str, value: int) -> bool
+    fn setFloat(self, name: str, value: float) -> bool
+    fn setStr(self, name: str, value: str) -> bool
+    fn setList(self, name: str, items: str) -> bool
+
+    fn call(self, op: str, args: str) -> str
+    fn callBool(self, op: str, args: str) -> bool
+    fn callInt(self, op: str, args: str) -> int
+    fn callFloat(self, op: str, args: str) -> float
+    fn callRows(self, op: str, args: str) -> DataRows
+
+    fn damage(self, amount: float, cause: str, attackerId: int) -> bool
+    fn kill(self) -> bool
+    fn addEffect(self, effect: str, ticks: int, amplifier: int) -> bool
+    fn removeEffect(self, effect: str) -> bool
+    fn clearEffects(self)
+    fn hasEffect(self, effect: str) -> bool
+    fn effects(self) -> DataRows
+    fn attribute(self, name: str) -> float
+    fn attributeBase(self, name: str) -> float
+    fn setAttributeBase(self, name: str, value: float) -> bool
+    fn push(self, x: float, y: float, z: float)
+    fn knockback(self, strength: float, towardsX: float, towardsZ: float)
+    fn mount(self, vehicleId: int) -> bool
+    fn dismount(self) -> bool
+    fn eject(self) -> bool
+}
+
+fn entityById(id: int) -> Entity?
+fn entityByUuid(uuid: str) -> Entity?
+fn entityOfPlayer(p: Player) -> Entity?
+fn worldEntities(world: World) -> DataRows
+fn spawnEntity(world: World, type: str, x: float, y: float, z: float) -> Entity?
+fn spawnEntityAs(world: World, type: str, x: float, y: float, z: float, yaw: float, reason: str) -> Entity?
+fn dropItemAt(world: World, item: str, count: int, x: float, y: float, z: float, vx: float, vy: float, vz: float) -> int
+fn explode(world: World, x: float, y: float, z: float, power: float, breakBlocks: bool, sourceId: int, fire: bool) -> bool
+
+@handle
+struct ItemStack {
+    id: str,
+    count: int,
+    name: str,
+    damage: int,
+    loreLines: int
+}
+
+impl ItemStack {
+    fn setCount(self, count: int)
+    fn setName(self, text: str)
+    fn addLore(self, line: str)
+    fn clearLore(self)
+    fn lore(self, index: int) -> str
+    fn setDamage(self, damage: int)
+    fn enchant(self, id: str, level: int)
+    fn enchantLevel(self, id: str) -> int
+    fn enchantments(self) -> DataRows
+    fn components(self) -> str
+    fn setComponents(self, snbt: str) -> bool
+}
+
+fn item(id: str, count: int) -> ItemStack
+
+@handle
+struct Inventory {
+    size: int,
+    heldSlot: int
+}
+
+impl Inventory {
+    fn itemAt(self, slot: int) -> ItemStack?
+    fn set(self, slot: int, item: ItemStack)
+    fn clearSlot(self, slot: int)
+    fn add(self, item: ItemStack) -> int
+    fn remove(self, id: str, count: int) -> int
+    fn count(self, id: str) -> int
+    fn clear(self)
+    fn setHeldSlot(self, slot: int)
+}
+
+fn inventoryOf(p: Player) -> Inventory
+
+@handle
+struct Menu {
+    title: str,
+    rows: int,
+    size: int
+}
+
+impl Menu {
+    fn set(self, slot: int, item: ItemStack, handler: str)
+    fn clear(self)
+    fn open(self, p: Player)
+    fn close(self, p: Player)
+}
+
+fn menu(title: str, rows: int) -> Menu
+
+@handle
+struct Form {
+    title: str
+}
+
+impl Form {
+    fn addBody(self, text: str)
+    fn addText(self, key: str, label: str, initial: str)
+    fn addToggle(self, key: str, label: str, initial: bool)
+    fn addSlider(self, key: str, label: str, min: float, max: float, step: float, initial: float)
+    fn addChoice(self, key: str, label: str, options: str, initial: str)
+    fn addButton(self, text: str)
+    fn open(self, p: Player, handler: str)
+    fn close(self, p: Player)
+}
+
+fn form(title: str) -> Form
+fn formButton() -> int
+fn formAnswer(key: str) -> str
+
+fn recipeIds() -> DataRows
+fn recipeHas(id: str) -> bool
+fn recipeData(id: str) -> str
+fn recipeAdd(id: str, json: str) -> bool
+fn recipeRemove(id: str) -> bool
+fn recipesClear()
+fn recipesReset()
+fn recipesResetBrewing()
+fn recipeCraft(width: int, height: int, items: str) -> str
+fn recipeAnvil(left: str, right: str, name: str) -> str
+fn recipeSmithing(template: str, base: str, addition: str) -> str
+fn registryItemData(id: str) -> str
+fn registryEnchantmentData(id: str) -> str
+fn registryEnchantments() -> DataRows
+fn registryTags(registry: str) -> DataRows
+fn registryMobEffects() -> str
+fn registryPotions() -> str
+
+fn lootTables() -> DataRows
+fn lootHas(table: str) -> bool
+fn lootRoll(table: str, world: str, x: float, y: float, z: float, luck: float, seed: int, looter: str) -> DataRows?
+fn lootRollJson(json: str, world: str, x: float, y: float, z: float, luck: float, seed: int, looter: str) -> DataRows?
+fn lootNumber(json: str, asFloat: bool, seed: int) -> float
+fn lootApply(functions: str, item: str, count: int, components: str, world: str, x: float, y: float, z: float, seed: int) -> DataRows?
+fn lootEnchant(item: str, count: int, components: str, world: str, options: str, levels: int, seed: int) -> DataRows?
+fn lootTrades(profession: str, level: int, world: str, x: float, y: float, z: float, variant: str, amount: int, seed: int, listed: str) -> DataRows?
+
+fn combatAfterArmor(damage: float, armor: float, toughness: float, fractionAdd: float) -> float
+fn combatAfterProtection(damage: float, protection: float) -> float
+fn combatAfterResistance(damage: float, amplifier: int) -> float
+fn combatAfterDifficulty(damage: float, difficulty: str) -> float
+fn combatScalesWithDifficulty(scaling: str, byLivingNonPlayer: bool) -> bool
+fn combatAbsorbHealth(damage: float, absorption: float) -> float
+fn combatAbsorbAbsorption(damage: float, absorption: float) -> float
+fn combatFallDamage(distance: float, safeDistance: float) -> int
+fn breedingOffspringAttribute(parentA: float, parentB: float, min: float, max: float, first: float, second: float, third: float) -> float
+
+fn physicsClip(box: str, from: str, to: str) -> str
+fn physicsCollide(colliders: str, box: str, movement: str) -> str
+fn physicsStepUp(colliders: str, box: str, groundedOffsetY: float, movement: str, maxUpStep: float, reachSquared: float) -> str
+fn physicsRotateTowardsMovement(motion: str, xRotO: float, yRotO: float, xRot: float, yRot: float, speed: float) -> str
+fn physicsClosestHit(candidates: str, from: str, to: str, margin: float) -> str
+fn physicsPickedHit(candidates: str, exceptRoot: int, from: str, to: str, maxValue: float) -> str
+fn physicsProjectileMargin(ticks: int) -> float
+fn physicsShulkerBox(size: float, direction: int, progressFrom: float, progressTo: float, position: str) -> str
+fn physicsLeashAngularFriction(onGround: bool, blockFriction: float, inLiquid: bool) -> float
+fn physicsLeashPull(body: str, holder: str, quad: bool, slack: float, selfMotion: str, holderMotion: str, knownMotion: str) -> str
+
+@handle
+struct Scoreboard {}
+
+impl Scoreboard {
+    fn objectives(self) -> [str]
+    fn addObjective(self, name: str, criterion: str, displayName: str, hearts: bool) -> bool
+    fn removeObjective(self, name: str) -> bool
+    fn display(self, slot: str, objective: str)
+    fn clearDisplay(self, slot: str)
+    fn displayed(self, slot: str) -> str?
+    fn hasScore(self, entry: str, objective: str) -> bool
+    fn score(self, entry: str, objective: str) -> int
+    fn setScore(self, entry: str, objective: str, value: int) -> bool
+    fn addScore(self, entry: str, objective: str, delta: int) -> int
+    fn resetScore(self, entry: str, objective: str)
+    fn resetEntry(self, entry: str)
+    fn entries(self) -> [str]
+    fn entriesIn(self, objective: str) -> [str]
+    fn teams(self) -> [str]
+    fn addTeam(self, name: str) -> bool
+    fn removeTeam(self, name: str) -> bool
+    fn setTeamStyle(self, team: str, displayName: str, prefix: str, suffix: str, color: str) -> bool
+    fn setTeamRules(self, team: str, friendlyFire: bool, seeInvisible: bool, nameTags: str, deathMessages: str, collision: str) -> bool
+    fn joinTeam(self, team: str, entry: str) -> bool
+    fn leaveTeam(self, team: str, entry: str) -> bool
+    fn teamOf(self, entry: str) -> str?
+    fn members(self, team: str) -> [str]
+    fn show(self, player: Player)
+    fn release(self)
+}
+
+fn mainScoreboard() -> Scoreboard
+fn createScoreboard() -> Scoreboard?
+fn shownScoreboard(player: Player) -> Scoreboard
+
+@handle
+struct BossBar {}
+
+impl BossBar {
+    fn id(self) -> str
+    fn progress(self) -> float
+    fn visible(self) -> bool
+    fn setTitle(self, title: str)
+    fn setProgress(self, value: float)
+    fn setColor(self, color: str)
+    fn setStyle(self, style: str)
+    fn setFlags(self, darkenSky: bool, bossMusic: bool, fog: bool)
+    fn setVisible(self, visible: bool)
+    fn addPlayer(self, player: Player) -> bool
+    fn removePlayer(self, player: Player) -> bool
+    fn clearPlayers(self)
+    fn players(self) -> [str]
+    fn remove(self) -> bool
+}
+
+fn createBossBar(title: str, color: str, style: str) -> BossBar?
+fn createKeptBossBar(key: str, title: str, color: str, style: str) -> BossBar?
+fn bossBarNamed(id: str) -> BossBar?
+fn keptBossBars() -> [str]
+
+@handle
+struct Advancement {
+    id: str,
+    parent: str,
+    root: str,
+    frame: str,
+    icon: str,
+    title: str,
+    description: str,
+    hasDisplay: bool,
+    hidden: bool,
+    toast: bool,
+    announce: bool,
+    experience: int
+}
+
+impl Advancement {
+    fn criteria(self) -> [str]
+    fn children(self) -> [str]
+}
+
+fn advancementIds() -> [str]
+fn advancementNamed(id: str) -> Advancement?
+fn grantAdvancement(player: Player, id: str, criterion: str) -> bool
+fn revokeAdvancement(player: Player, id: str, criterion: str) -> bool
+fn advancementProgress(player: Player, id: str) -> [str]
+fn advancementTime(player: Player, id: str, criterion: str) -> int
+fn triggerAdvancement(player: Player, trigger: str, item: str, count: int) -> bool
+fn triggerAdvancementAt(player: Player, trigger: str, x: int, y: int, z: int, item: str, count: int) -> bool
+
+@handle
+struct MapData {
+    id: int,
+    dimension: str,
+    scale: int,
+    centerX: int,
+    centerZ: int,
+    tracking: bool,
+    unlimited: bool,
+    locked: bool
+}
+
+impl MapData {
+    fn setLocked(self, locked: bool) -> bool
+    fn setTracking(self, tracking: bool) -> bool
+    fn setUnlimited(self, unlimited: bool) -> bool
+    fn colorAt(self, x: int, z: int) -> int
+    fn carriers(self) -> [str]
+    fn show(self, player: Player, colors: [int])
+}
+
+fn createMap(world: str, centerX: int, centerZ: int, scale: int) -> MapData?
+fn mapById(id: int) -> MapData?
+fn exploreMap(world: str, x: float, y: float, z: float, destination: [str], decoration: str, zoom: int, radius: int, skipExisting: bool) -> str?
+
+@handle
+struct Stopwatch {}
+
+impl Stopwatch {
+    fn id(self) -> str
+    fn elapsed(self) -> float
+    fn restart(self) -> bool
+    fn remove(self) -> bool
+}
+
+fn stopwatchIds() -> [str]
+fn createStopwatch(id: str) -> Stopwatch?
+fn stopwatchNamed(id: str) -> Stopwatch?
+
+struct Trade {
+    costItem: str,
+    costCount: int,
+    costComponents: str,
+    hasSecondCost: bool,
+    secondItem: str,
+    secondCount: int,
+    secondComponents: str,
+    resultItem: str,
+    resultCount: int,
+    resultComponents: str,
+    maxUses: int,
+    experience: int,
+    priceMultiplier: float
+}
+
+fn rollTrades(profession: str, level: int, world: str, x: float, y: float, z: float, variant: str, amount: int, seed: int) -> [Trade]
+
+struct Datapack {
+    id: str,
+    enabled: bool,
+    required: bool,
+    compatibility: str,
+    source: str
+}
+
+struct ScheduledFunction {
+    name: str,
+    triggerTime: int
+}
+
+fn datapacks() -> [Datapack]
+fn refreshDatapacks()
+fn reloadDatapacks() -> bool
+fn functionIds() -> [str]
+fn functionTagIds() -> [str]
+fn scheduledFunctions() -> [ScheduledFunction]
+fn scheduleFunction(name: str, delay: int, replace: bool) -> bool
+fn unscheduleFunction(name: str) -> int
+fn datapackResource(name: str) -> str?
+fn datapackResources(prefix: str) -> [str]
+fn datapackResourcePack(name: str) -> str?
+
+@handle
+struct Structure {}
+
+struct TemplateBlock {
+    x: int,
+    y: int,
+    z: int,
+    stateId: int,
+    stateText: str,
+    nbt: str
+}
+
+struct TemplateJigsaw {
+    x: int,
+    y: int,
+    z: int,
+    front: str,
+    top: str,
+    rollable: bool,
+    name: str,
+    pool: str,
+    target: str,
+    finalState: str,
+    placementPriority: int,
+    selectionPriority: int
+}
+
+impl Structure {
+    fn id(self) -> str
+    fn file(self) -> str
+    fn read(self) -> str?
+    fn remove(self, fromDisk: bool) -> bool
+    fn place(self, world: str, x: int, y: int, z: int, rotation: int, mirror: int, integrity: float, seed: int, entities: bool, palette: int) -> bool
+    fn size(self) -> [int]
+    fn blocks(self, x: int, y: int, z: int, rotation: int, mirror: int, pivotX: int, pivotZ: int, block: str, absolute: bool) -> [TemplateBlock]
+    fn jigsaws(self, x: int, y: int, z: int, rotation: int, mirror: int, pivotX: int, pivotZ: int) -> [TemplateJigsaw]
+}
+
+fn structureIds() -> [str]
+fn structureNamed(id: str) -> Structure?
+fn storeStructure(id: str, snbt: str, toDisk: bool) -> Structure?
+fn captureStructure(world: str, x: int, y: int, z: int, sizeX: int, sizeY: int, sizeZ: int, entities: bool) -> str?
+fn placeStructureData(snbt: str, world: str, x: int, y: int, z: int, rotation: int, mirror: int, integrity: float, seed: int, entities: bool, palette: int) -> bool
+
+@handle
+struct Noise {}
+
+impl Noise {
+    fn sample(self, x: float, y: float, z: float) -> float?
+    fn range(self) -> [float]
+    fn release(self)
+}
+
+fn terrainShape(settings: str) -> [int]
+fn terrainDensity(settings: str, seed: int, function: str, x: int, y: int, z: int) -> float?
+fn terrainDensityTree(settings: str, seed: int, json: str, x: int, y: int, z: int) -> float?
+fn terrainNoise(settings: str, seed: int, id: str, x: float, y: float, z: float) -> float?
+fn terrainNoiseRange(settings: str, seed: int, id: str) -> [float]
+fn terrainHeight(settings: str, seed: int, x: int, z: int, oceanFloor: bool) -> int?
+fn terrainColumn(settings: str, seed: int, x: int, z: int) -> [int]
+fn createNoise(id: str, legacy: bool, low: int, high: int, nether: bool) -> Noise?
+fn createNoiseFrom(baseAmplitude: float, baseOctave: int, octaveCount: int, normalize: int, amplitudes: [float], legacy: bool, low: int, high: int, nether: bool) -> Noise?
+
+struct DatafixStep {
+    version: int,
+    subVersion: int,
+    name: str
+}
+
+fn datafixUpgrade(type: str, snbt: str, fromVersion: int, toVersion: int) -> Result<str, str>
+fn datafixStep(type: str, name: str, snbt: str, versionKey: int) -> Result<str, str>
+fn datafixMissing(type: str, fromVersion: int, toVersion: int) -> str
+fn datafixSteps(type: str) -> [DatafixStep]
+fn datafixTypes() -> [str]
+fn datafixSupports(type: str) -> bool
+fn datafixCurrentVersion() -> int
+fn legacyBlockName(id: int) -> str
+fn legacyBlockProperties(id: int) -> [str]
+
+fn creativeTabItems(tab: str) -> [str]
+
+fn settingKeys() -> [str]
+fn setting(key: str) -> str?
+fn setSetting(key: str, value: str) -> bool
+
+fn translate(key: str) -> str
+fn hasTranslation(key: str) -> bool
+fn translationLocales() -> int
+fn reloadTranslations()
+
+struct TopEntry {
+    uuid: str,
+    name: str,
+    value: float
+}
+
+fn storeText(key: str, fallback: str) -> str
+fn storeInt(key: str, fallback: int) -> int
+fn storeFloat(key: str, fallback: float) -> float
+fn storeBool(key: str, fallback: bool) -> bool
+fn storeHas(key: str) -> bool
+fn storeSetText(key: str, value: str)
+fn storeSetInt(key: str, value: int)
+fn storeSetFloat(key: str, value: float)
+fn storeSetBool(key: str, value: bool)
+fn storeRemove(key: str)
+fn storeTop(key: str, limit: int) -> [TopEntry]
+
+fn playerStoreText(player: Player, key: str, fallback: str) -> str
+fn playerStoreInt(player: Player, key: str, fallback: int) -> int
+fn playerStoreFloat(player: Player, key: str, fallback: float) -> float
+fn playerStoreBool(player: Player, key: str, fallback: bool) -> bool
+fn playerStoreHas(player: Player, key: str) -> bool
+fn playerStoreSetText(player: Player, key: str, value: str)
+fn playerStoreSetInt(player: Player, key: str, value: int)
+fn playerStoreSetFloat(player: Player, key: str, value: float)
+fn playerStoreSetBool(player: Player, key: str, value: bool)
+fn playerStoreRemove(player: Player, key: str)
+
+fn providePermissions(priority: int)
+fn checkPermission(player: Player, node: str) -> int
+fn permissionMeta(player: Player, key: str) -> str?
+fn permissionsChanged()
+fn declarePermission(node: str, defaultKind: int, children: [str], childValues: [int])
+fn undeclarePermission(node: str)
+
+@handle
+struct Packet {
+    name: str,
+    serverbound: bool,
+    player: str,
+    playerUuid: str,
+    clientProtocol: int,
+    translated: bool,
+    size: int
+}
+
+impl Packet {
+    fn cancel(self)
+    fn bytes(self) -> [int]
+    fn replace(self, body: [int])
+}
+
+fn packetNames() -> [str]
+fn sendPacket(player: Player, name: str, body: [int], intercept: bool) -> bool
+fn receivePacket(player: Player, name: str, body: [int], intercept: bool) -> bool
+fn listenPackets()
+fn sendChannel(player: Player, channel: str, body: [int]) -> bool
+fn listenChannels()
+
+struct StructureStart {
+    structure: str,
+    chunkX: int,
+    chunkZ: int,
+    minX: int,
+    minY: int,
+    minZ: int,
+    maxX: int,
+    maxY: int,
+    maxZ: int,
+    pieces: int
+}
+
+struct PointOfInterest {
+    type: str,
+    x: int,
+    y: int,
+    z: int,
+    freeTickets: int
+}
+
+impl World {
+    fn sound(self, sound: str, category: str, x: float, y: float, z: float, volume: float, pitch: float)
+    fn particle(self, type: str, x: float, y: float, z: float, count: int, offsetX: float, offsetY: float, offsetZ: float, speed: float, force: bool)
+    fn levelEvent(self, type: int, x: int, y: int, z: int, data: int, global: bool)
+    fn blockEvent(self, x: int, y: int, z: int, first: int, second: int)
+    fn border(self) -> [float]
+    fn setBorder(self, centerX: float, centerZ: float, size: float, damagePerBlock: float, damageBuffer: float, warningBlocks: int, warningSeconds: int, seconds: float)
+    fn playerCount(self) -> int
+    fn blockEntityCount(self) -> int
+    fn seaLevel(self) -> int
+    fn viewDistance(self) -> int
+    fn setViewDistance(self, chunks: int)
+    fn forcedChunks(self) -> [int]
+    fn setChunkForced(self, chunkX: int, chunkZ: int, forced: bool)
+    fn weatherTimes(self) -> [int]
+    fn setWeatherTimes(self, rain: int, thunder: int, clear: int)
+    fn inhabitedTime(self, chunkX: int, chunkZ: int) -> int
+    fn setInhabitedTime(self, chunkX: int, chunkZ: int, ticks: int)
+    fn clockTicks(self) -> int
+    fn clockRate(self) -> float
+    fn clockPaused(self) -> bool
+    fn setClockRate(self, rate: float) -> bool
+    fn moveToTimeMarker(self, marker: str) -> int
+    fn fluidAt(self, x: int, y: int, z: int) -> str
+    fn fluidLevel(self, x: int, y: int, z: int) -> int
+    fn fluidFlow(self, x: int, y: int, z: int) -> [float]
+    fn humidity(self, x: int, y: int, z: int) -> float
+    fn temperature(self, x: int, y: int, z: int) -> float
+    fn lightningTarget(self, x: int, z: int) -> [int]
+    fn gameEvent(self, event: str, x: float, y: float, z: float, source: str)
+    fn growTree(self, x: int, y: int, z: int, sapling: str) -> bool
+    fn boneMeal(self, x: int, y: int, z: int) -> bool
+    fn breakBlock(self, x: int, y: int, z: int, tool: str, drops: bool) -> bool
+    fn signalFrom(self, x: int, y: int, z: int, face: int, direct: bool) -> int
+    fn analogSignal(self, x: int, y: int, z: int, face: int) -> int
+    fn randomTick(self, x: int, y: int, z: int) -> bool
+    fn survives(self, x: int, y: int, z: int, stateId: int) -> bool
+    fn featureIds(self) -> [str]
+    fn placeFeature(self, feature: str, x: int, y: int, z: int, seed: int, apply: bool) -> int
+    fn placeTree(self, tree: str, x: int, y: int, z: int, apply: bool) -> int
+    fn structureStarts(self, chunkX: int, chunkZ: int) -> [StructureStart]
+    fn pointsOfInterest(self, types: [str], x: int, y: int, z: int, radius: int, occupancy: int) -> [PointOfInterest]
+    fn tunable(self, key: str) -> float?
+    fn setTunable(self, key: str, value: float) -> bool
+}
+
+struct BlockEntry {
+    name: str,
+    firstState: int,
+    stateCount: int
+}
+
+struct BlockProperty {
+    name: str,
+    values: str
+}
+
+struct GameRuleSpec {
+    name: str,
+    kind: str,
+    defaultValue: str
+}
+
+struct NamePair {
+    name: str,
+    value: str
+}
+
+fn blockStateId(text: str) -> int
+fn blockStateText(stateId: int) -> str
+fn biomeIds() -> [str]
+fn blockEntries() -> [BlockEntry]
+fn blockProperties(block: str) -> [BlockProperty]
+fn stateFlags(stateId: int) -> int
+fn blockHardness(block: str) -> [float]
+fn blockInfo(stateId: int) -> [float]
+fn blockInstrument(stateId: int) -> str?
+fn blockShape(stateId: int) -> [float]
+fn blockOutline(stateId: int, x: int, z: int) -> [float]
+fn blockVisual(stateId: int) -> [float]
+fn blockSounds(stateId: int) -> [str]
+fn toolFacts(item: str, stateId: int) -> [float]
+fn gameRuleSpecs() -> [GameRuleSpec]
+fn transformState(stateId: int, rotation: int, mirror: int) -> int
+fn blockEntityTypes() -> [NamePair]
+fn dataVersion() -> int
+fn fixNbt(kind: str, snbt: str, fromVersion: int) -> str?
+fn fixName(kind: str, text: str, fromVersion: int) -> str?
+fn itemIds() -> [str]
+fn entityTypeIds() -> [str]
+fn entityDefaultAttributes(type: str) -> [NamePair]
+fn registryIds(registry: str) -> [str]
+fn registryData(registry: str, id: str) -> str?
+fn poiTypeOf(stateId: int) -> str
+fn poiTickets(type: str) -> int
+fn gameEventFrequency(event: str) -> int
+fn netherPortalExit(from: str, to: str, x: float, y: float, z: float, alongX: bool) -> [float]
+fn worldNames() -> [str]
+fn createWorld(name: str, dimension: str, type: str) -> World?
+fn createSeededWorld(name: str, dimension: str, type: str, seed: int) -> World?
+fn unloadWorld(name: str, save: bool) -> bool
+fn deleteWorld(name: str) -> bool
+
+struct Raid {
+    id: int,
+    started: bool,
+    ticksActive: int,
+    omenLevel: int,
+    status: str,
+    groupsSpawned: int,
+    totalGroups: int,
+    totalHealth: float,
+    centerX: int,
+    centerY: int,
+    centerZ: int,
+    barTitle: str,
+    barColor: int,
+    barStyle: int,
+    barFlags: int,
+    barProgress: float,
+    barVisible: bool
+}
+
+struct BlockDrop {
+    item: str,
+    count: int,
+    components: str
+}
+
+struct BeaconSection {
+    color: int,
+    height: int
+}
+
+struct ClockMarker {
+    name: str,
+    ticks: int
+}
+
+impl World {
+    fn raids(self) -> [Raid]
+    fn raidHeroes(self, id: int) -> [str]
+    fn raidRaiders(self, id: int) -> [int]
+    fn raidLeaders(self, id: int) -> [int]
+    fn raidControl(self, id: int, action: str, first: int, second: int, third: int, fourth: int, amplifier: int) -> int
+    fn setRaid(self, id: int, omenLevel: int, totalGroups: int) -> bool
+    fn raidBar(self, id: int, action: str, text: str, value: int) -> bool
+    fn raidValues(self, id: int) -> str?
+    fn setRaidValues(self, id: int, snbt: str) -> bool
+    fn sculkShriek(self, x: int, y: int, z: int, player: str) -> bool
+    fn sculkBloom(self, x: int, y: int, z: int, sourceX: int, sourceY: int, sourceZ: int, charge: int) -> bool
+    fn sculkUpdate(self, x: int, y: int, z: int) -> bool
+    fn hive(self, action: str, x: int, y: int, z: int, entityId: int, player: str) -> int
+    fn vault(self, action: str, x: int, y: int, z: int, player: str) -> int
+    fn creakingHeart(self, action: str, x: int, y: int, z: int) -> str?
+    fn randomSequenceInt(self, id: str, operation: str, argument: int) -> int
+    fn randomSequenceBool(self, id: str) -> bool
+    fn randomSequenceFloat(self, id: str, operation: str) -> float
+    fn blockDrops(self, x: int, y: int, z: int, tool: str, enchantments: [str], levels: [int]) -> [BlockDrop]
+    fn breakBlockWith(self, x: int, y: int, z: int, tool: str, enchantments: [str], levels: [int], drops: bool) -> bool
+    fn ownSignalFrom(self, x: int, y: int, z: int, face: int) -> int
+    fn breakSpeed(self, player: Player, x: int, y: int, z: int) -> float
+    fn beaconLevels(self, x: int, y: int, z: int) -> int
+    fn beaconSections(self, x: int, y: int, z: int) -> [BeaconSection]
+    fn climateAt(self, x: int, y: int, z: int) -> [float]
+    fn clockMarkers(self) -> [ClockMarker]
+    fn spawnRules(self) -> [int]
+    fn setSpawnRules(self, limits: [int], ticksPer: [int], allowMonsters: bool, allowAnimals: bool)
+    fn tickableBlockEntityCount(self) -> int
+    fn soundWithSeed(self, sound: str, category: str, x: float, y: float, z: float, volume: float, pitch: float, seed: int)
+    fn particleWith(self, type: str, x: float, y: float, z: float, count: int, offsetX: float, offsetY: float, offsetZ: float, speedX: float, speedY: float, speedZ: float, randomization: int, force: bool, item: str, receiver: str, data: [float])
+}
+
+impl World {
+    fn height(self) -> int
+    fn minHeight(self) -> int
+    fn difficultyLocked(self) -> bool
+    fn gameRules(self) -> [str]
+    fn spawnPoint(self) -> [int]
+    fn setSpawn(self, x: int, y: int, z: int)
+    fn setDifficulty(self, name: str) -> bool
+    fn setDifficultyLocked(self, locked: bool)
+    fn blockState(self, x: int, y: int, z: int) -> str
+    fn biomeAt(self, x: int, y: int, z: int) -> str?
+    fn setBiome(self, x: int, y: int, z: int, biome: str) -> bool
+    fn highest(self, x: int, z: int, kind: str, load: bool) -> int
+    fn chunkLoaded(self, chunkX: int, chunkZ: int) -> bool
+    fn loadChunk(self, chunkX: int, chunkZ: int, generate: bool) -> bool
+    fn unloadChunk(self, chunkX: int, chunkZ: int) -> bool
+    fn chunkStatus(self, chunkX: int, chunkZ: int) -> int
+    fn loadedChunks(self) -> [int]
+    fn requestChunk(self, chunkX: int, chunkZ: int, generate: bool, priority: int, handler: str)
+    fn holdChunks(self, token: str, chunks: [int]) -> bool
+    fn releaseChunks(self, token: str, chunks: [int])
+    fn heldChunks(self, token: str) -> [int]
+    fn chunkHolders(self, chunkX: int, chunkZ: int, all: bool) -> [str]
+    fn saveWorld(self)
+    fn blockVersion(self) -> int
+    fn stateAt(self, x: int, y: int, z: int, load: bool) -> int
+    fn setStateAt(self, x: int, y: int, z: int, stateId: int, notify: bool) -> bool
+    fn readStates(self, positions: [int], load: bool) -> [int]
+    fn writeStates(self, positions: [int], states: [int], notify: bool) -> int
+    fn readSection(self, chunkX: int, sectionY: int, chunkZ: int, load: bool) -> [int]
+    fn writeSection(self, chunkX: int, sectionY: int, chunkZ: int, states: [int], notify: bool) -> bool
+    fn readSections(self, chunkX: int, chunkZ: int, load: bool) -> [int]
+    fn applySections(self, chunkX: int, chunkZ: int, sectionYs: [int], states: [int], resend: bool) -> int
+    fn applyChunks(self, chunks: [int], sectionYs: [int], states: [int], resend: bool) -> int
+    fn settleBlocks(self, positions: [int], previous: [int], effects: int) -> int
+    fn updateNeighbors(self, positions: [int], effects: int) -> int
+    fn neighborChanged(self, positions: [int], sources: [int]) -> int
+    fn validState(self, x: int, y: int, z: int, stateId: int) -> int
+    fn updateShapes(self, positions: [int], states: [int], indirect: bool) -> int
+    fn useItemOn(self, x: int, y: int, z: int, face: int, item: str, yaw: float, pitch: float) -> int
+    fn hasScheduledTick(self, x: int, y: int, z: int) -> bool
+    fn scheduleTick(self, x: int, y: int, z: int, delay: int, fluid: bool) -> bool
+    fn applyChanges(self, positions: [int], states: [int], effects: int) -> int
+    fn entityIdsIn(self, chunkX: int, chunkZ: int) -> [int]
+    fn removeEntityByUuid(self, uuid: str) -> bool
+}
+
+impl World {
+    fn blockEntity(self, x: int, y: int, z: int) -> str?
+    fn blockEntityPositions(self, chunkX: int, chunkZ: int) -> [int]
+    fn setBlockEntity(self, x: int, y: int, z: int, snbt: str) -> bool
+    fn createBlockEntity(self, x: int, y: int, z: int, snbt: str) -> bool
+    fn removeBlockEntity(self, x: int, y: int, z: int) -> bool
+    fn entityNbt(self, entityId: int) -> str?
+    fn loadEntityNbt(self, entityId: int, snbt: str) -> bool
+    fn spawnEntityNbt(self, snbt: str, cause: str) -> int
+    fn pluginData(self) -> str
+    fn setPluginData(self, snbt: str) -> bool
+    fn chunkPluginData(self, chunkX: int, chunkZ: int) -> str?
+    fn setChunkPluginData(self, chunkX: int, chunkZ: int, snbt: str) -> bool
+    fn blockEntityPluginData(self, x: int, y: int, z: int) -> str?
+    fn setBlockEntityPluginData(self, x: int, y: int, z: int, snbt: str) -> bool
+    fn entityPluginData(self, entityId: int) -> str?
+    fn setEntityPluginData(self, entityId: int, snbt: str) -> bool
+    fn storedChunkNbt(self, chunkX: int, chunkZ: int) -> str?
+    fn hasStoredChunk(self, chunkX: int, chunkZ: int) -> bool
+    fn storeChunkNbt(self, chunkX: int, chunkZ: int, snbt: str) -> bool
+    fn storedChunksIn(self, regionX: int, regionZ: int) -> [int]
+    fn readBiomes(self, chunkX: int, chunkZ: int) -> [int]
+    fn writeBiomes(self, chunkX: int, chunkZ: int, ids: [int]) -> bool
+    fn lightAt(self, x: int, y: int, z: int, layer: int) -> int
+    fn readLight(self, chunkX: int, sectionY: int, chunkZ: int, layer: int, load: bool) -> [int]
+    fn writeLight(self, chunkX: int, sectionY: int, chunkZ: int, layer: int, nibbles: [int]) -> bool
+    fn relightChunks(self, chunks: [int])
+    fn locateStructure(self, structure: str, x: int, z: int, cells: int, skipExisting: bool) -> [int]
+    fn locateBiome(self, biomes: [str], x: int, y: int, z: int, radius: int, step: int) -> [int]
+}
+
+@handle
+struct Npc {
+    id: int,
+    uuid: str,
+    name: str,
+    world: str,
+    x: float,
+    y: float,
+    z: float,
+    alive: bool,
+    health: float,
+    maxHealth: float,
+    heldSlot: int,
+    flags: int,
+    pose: int
+}
+
+impl Npc {
+    fn setName(self, name: str)
+    fn setHealth(self, health: float)
+    fn setHeldSlot(self, slot: int)
+    fn attribute(self, name: str) -> float?
+    fn setAttribute(self, name: str, value: float) -> bool
+    fn equip(self, slot: int, item: str, count: int) -> bool
+    fn unequip(self, slot: int)
+    fn itemId(self, slot: int) -> str
+    fn itemCount(self, slot: int) -> int
+    fn animate(self, action: int)
+    fn setSkin(self, texture: str, signature: str)
+    fn setSkinFrom(self, playerName: str) -> bool
+    fn lookAtPlayers(self, follows: bool)
+    fn look(self, yaw: float, pitch: float)
+    fn place(self, x: float, y: float, z: float, yaw: float, pitch: float, headYaw: float, onGround: bool)
+    fn teleport(self, x: float, y: float, z: float) -> bool
+    fn showOnlyTo(self, uuids: [str])
+    fn showToAll(self)
+    fn audience(self) -> [str]
+    fn restricted(self) -> bool
+    fn remove(self)
+}
+
+@handle
+struct Hologram {
+    id: int,
+    world: str,
+    x: float,
+    y: float,
+    z: float,
+    alive: bool,
+    text: str
+}
+
+impl Hologram {
+    fn setText(self, text: str)
+    fn teleport(self, x: float, y: float, z: float) -> bool
+    fn showOnlyTo(self, uuids: [str])
+    fn showToAll(self)
+    fn audience(self) -> [str]
+    fn restricted(self) -> bool
+    fn remove(self)
+}
+
+fn createNpc(world: World, name: str, x: float, y: float, z: float, onClick: str) -> Npc?
+fn createFakePlayer(world: World, uuid: str, name: str, x: float, y: float, z: float) -> Npc?
+fn npcById(world: World, entityId: int) -> Npc?
+fn createHologram(world: World, text: str, x: float, y: float, z: float) -> Hologram?
+
+struct ServerLink {
+    kind: str,
+    label: str,
+    url: str
+}
+
+fn enchantmentLevelValue(json: str, level: int) -> float
+fn regionRead(folder: str, chunkX: int, chunkZ: int) -> [int]
+fn regionWrite(folder: str, chunkX: int, chunkZ: int, data: [int], timestamp: int)
+fn regionTimestamp(folder: str, chunkX: int, chunkZ: int) -> int
+fn regionFlush(folder: str, release: bool) -> bool
+fn overworldBiomeParameters() -> [int]
+fn overworldBiomeNames() -> [str]
+
+impl MapData {
+    fn showWithCursors(self, player: Player, colors: [int], cursorX: [int], cursorY: [int], direction: [int], kind: [int], captions: [str])
+}
+
+fn scanStructureData(snbt: str, x: int, y: int, z: int, rotation: int, mirror: int, pivotX: int, pivotZ: int, block: str, absolute: bool) -> [TemplateBlock]
+fn scanStructureJigsaws(snbt: str, x: int, y: int, z: int, rotation: int, mirror: int, pivotX: int, pivotZ: int) -> [TemplateJigsaw]
+fn structureDataSize(snbt: str) -> [int]
+
+fn createBossBarWith(key: str, title: str, color: str, style: str, progress: float, darkenSky: bool, bossMusic: bool, fog: bool, visible: bool) -> BossBar?
+
+fn checkPermissionOf(uuid: str, node: str) -> int
+fn permissionMetaOf(uuid: str, key: str) -> str?
+
+fn tickRate() -> float
+fn setTickRate(rate: float)
+fn tickFrozen() -> bool
+fn setTickFrozen(frozen: bool)
+fn tickStep(ticks: int) -> bool
+fn tickSprint(ticks: int) -> bool
+fn tickStopSprint() -> bool
+fn tickStopStepping() -> bool
+fn tickPace() -> [float]
+fn tickTimes() -> [int]
+fn tickPaused() -> bool
+fn tickSprinting() -> bool
+fn tickStepsOwed() -> int
+fn serverLinks() -> [ServerLink]
+fn setServerLinks(kinds: [str], labels: [str], urls: [str])
+
+fn dataJson(name: str) -> str
+fn dataSave(name: str, json: str) -> bool
+fn fileKind(path: str) -> str
+fn fileSize(path: str) -> int
+fn fileModified(path: str) -> int
+fn fileList(directory: str) -> [str]
+fn fileWalk(directory: str) -> [str]
+fn fileAtomicMove(directory: str) -> bool
+fn fileHardLinks(directory: str) -> bool
+
+fn setAffected(value: str)
+fn setAir(value: int)
+fn setAllied(value: bool)
+fn setAmount(value: float)
+fn setBuildable(value: bool)
+fn setBurnTime(value: int)
+fn setCanLoot(value: bool)
+fn setColor(value: str)
+fn setCommand(value: str)
+fn setCommands(value: str)
+fn setCompletions(value: str)
+fn setConsume(value: bool)
+fn setConsuming(value: bool)
+fn setCost(value: int)
+fn setCostA(value: str)
+fn setCostACount(value: int)
+fn setCostB(value: str)
+fn setCostBCount(value: int)
+fn setCount(value: int)
+fn setDemand(value: int)
+fn setDirX(value: float)
+fn setDirZ(value: float)
+fn setDropItems(value: bool)
+fn setDrops(value: str)
+fn setEnchants(value: str)
+fn setEntities(value: str)
+fn setExhaustion(value: float)
+fn setExp(value: int)
+fn setExperience(value: int)
+fn setFood(value: int)
+fn setFuelPower(value: int)
+fn setGoalResult(value: bool)
+fn setHatchType(value: str)
+fn setHatching(value: bool)
+fn setIncreaseUses(value: bool)
+fn setItem(value: str)
+fn setKx(value: float)
+fn setKy(value: float)
+fn setKz(value: float)
+fn setLine1(value: str)
+fn setLine2(value: str)
+fn setLine3(value: str)
+fn setLine4(value: str)
+fn setLoot(value: str)
+fn setMaxPlayers(value: int)
+fn setMaxUses(value: int)
+fn setMotd(value: str)
+fn setName(value: str)
+fn setNewBlock(value: str)
+fn setNewCurrent(value: int)
+fn setOffers(value: str)
+fn setOutcome(value: str)
+fn setOutput(value: str)
+fn setPages(value: str)
+fn setPattern(value: str)
+fn setPersistent(value: bool)
+fn setPlayEffect(value: bool)
+fn setPoints(value: int)
+fn setPower(value: float)
+fn setPriceMultiplier(value: float)
+fn setPrimary(value: str)
+fn setReason(value: str)
+fn setRecipe(value: str)
+fn setRepair(value: int)
+fn setResult(value: str)
+fn setResultCount(value: int)
+fn setRewardExp(value: bool)
+fn setSecondary(value: str)
+fn setSignal(value: int)
+fn setSigning(value: bool)
+fn setSilent(value: bool)
+fn setSpecialPrice(value: int)
+fn setTargetId(value: int)
+fn setTicks(value: int)
+fn setTitle(value: str)
+fn setToX(value: float)
+fn setToY(value: float)
+fn setToZ(value: float)
+fn setUseBed(value: str)
+fn setUses(value: int)
+fn setVx(value: float)
+fn setVy(value: float)
+fn setVz(value: float)
+fn setWillExplode(value: bool)
+fn setX(value: float)
+fn setY(value: float)
+fn setZ(value: float)
+
+struct PlayerJoinEvent {
+    player: Player
+    world: str
+    message: str
+    silent: bool
+}
+
+struct PlayerQuitEvent {
+    player: Player
+    world: str
+    message: str
+    silent: bool
+}
+
+struct PlayerChatEvent {
+    player: Player
+    world: str
+    message: str
+    cancelled: bool
+}
+
+struct PlayerCommandEvent {
+    player: Player
+    world: str
+    command: str
+    cancelled: bool
+}
+
+struct PlayerDeathEvent {
+    player: Player
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    cause: str
+    message: str
+}
+
+struct PlayerMoveEvent {
+    player: Player
+    world: str
+    fromX: f64
+    fromY: f64
+    fromZ: f64
+    x: f64
+    y: f64
+    z: f64
+    cancelled: bool
+}
+
+struct PlayerTeleportEvent {
+    player: Player
+    world: str
+    fromX: f64
+    fromY: f64
+    fromZ: f64
+    x: f64
+    y: f64
+    z: f64
+    cause: str
+    cancelled: bool
+}
+
+struct PlayerWorldChangeEvent {
+    player: Player
+    world: str
+    fromWorld: str
+}
+
+struct PlayerRespawnEvent {
+    player: Player
+    world: str
+    x: f64
+    y: f64
+    z: f64
+}
+
+struct PlayerInteractEvent {
+    player: Player
+    world: str
+    action: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    item: str
+    hand: str
+    face: str
+    cancelled: bool
+}
+
+struct PlayerItemDropEvent {
+    player: Player
+    world: str
+    item: str
+    count: i64
+    cancelled: bool
+}
+
+struct PlayerSneakEvent {
+    player: Player
+    world: str
+    sneaking: bool
+}
+
+struct PlayerGamemodeChangeEvent {
+    player: Player
+    world: str
+    gamemode: str
+    fromGamemode: str
+    cause: str
+    cancelled: bool
+}
+
+struct PlayerLevelChangeEvent {
+    player: Player
+    world: str
+    level: i64
+    fromLevel: i64
+}
+
+struct BlockBreakEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    dropItems: bool
+    cancelled: bool
+}
+
+struct BlockPlaceEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    cancelled: bool
+}
+
+struct EntityDamageEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    cause: str
+    amount: f64
+    attacker: str
+    cancelled: bool
+}
+
+struct EntityDeathEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    killer: str
+}
+
+struct WorldLoadEvent {
+    world: str
+}
+
+struct ServerTickEvent {
+    tick: i64
+}
+
+struct PlayerInteractEntityEvent {
+    player: Player
+    world: str
+    entityId: i64
+    entityType: str
+    action: str
+    hand: str
+    cancelled: bool
+}
+
+struct PlayerItemPickupEvent {
+    player: Player
+    world: str
+    item: str
+    count: i64
+    entityId: i64
+    cancelled: bool
+}
+
+struct PlayerItemHeldEvent {
+    player: Player
+    world: str
+    slot: i64
+    fromSlot: i64
+}
+
+struct PlayerItemConsumeEvent {
+    player: Player
+    world: str
+    item: str
+    cancelled: bool
+}
+
+struct PlayerSwapHandsEvent {
+    player: Player
+    world: str
+    mainItem: str
+    offItem: str
+    cancelled: bool
+}
+
+struct PlayerFoodChangeEvent {
+    player: Player
+    world: str
+    food: i64
+    fromFood: i64
+    item: str
+    cancelled: bool
+}
+
+struct PlayerCustomClickEvent {
+    player: Player
+    world: str
+    clickId: str
+    payload: str
+}
+
+struct PlayerSignChangeEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    line1: str
+    line2: str
+    line3: str
+    line4: str
+    cancelled: bool
+}
+
+struct PlayerBucketEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    filling: bool
+    face: str
+    cancelled: bool
+}
+
+struct PlayerLoginEvent {
+    player: Player
+    address: str
+    message: str
+    cancelled: bool
+}
+
+struct PlayerBedEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    entering: bool
+    cancelled: bool
+}
+
+struct PlayerEffectEvent {
+    player: Player
+    world: str
+    effect: str
+    amplifier: i64
+    duration: i64
+    cancelled: bool
+}
+
+struct PlayerItemDamageEvent {
+    player: Player
+    world: str
+    item: str
+    damage: i64
+    broken: bool
+    cancelled: bool
+}
+
+struct PlayerSprintEvent {
+    player: Player
+    world: str
+    sprinting: bool
+}
+
+struct PlayerPickItemEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    cancelled: bool
+}
+
+struct PlayerPortalEvent {
+    player: Player
+    world: str
+    toWorld: str
+    x: f64
+    y: f64
+    z: f64
+    kind: str
+    cancelled: bool
+}
+
+struct PlayerKickEvent {
+    player: Player
+    world: str
+    reason: str
+    cause: str
+    cancelled: bool
+}
+
+struct PlayerToggleFlightEvent {
+    player: Player
+    world: str
+    flying: bool
+    cancelled: bool
+}
+
+struct PlayerAnimationEvent {
+    player: Player
+    world: str
+    hand: str
+    cancelled: bool
+}
+
+struct PlayerJumpEvent {
+    player: Player
+    world: str
+    fromX: f64
+    fromY: f64
+    fromZ: f64
+    x: f64
+    y: f64
+    z: f64
+    cancelled: bool
+}
+
+struct PlayerEditBookEvent {
+    player: Player
+    world: str
+    slot: i64
+    signing: bool
+    title: str
+    pages: str
+    cancelled: bool
+}
+
+struct PlayerExpChangeEvent {
+    player: Player
+    world: str
+    points: i64
+    sourceId: i64
+}
+
+struct PlayerArmorChangeEvent {
+    player: Player
+    world: str
+    slot: str
+    oldItem: str
+    newItem: str
+}
+
+struct PlayerAdvancementEvent {
+    player: Player
+    world: str
+    advancement: str
+}
+
+struct PlayerResourcePackEvent {
+    player: Player
+    world: str
+    packId: str
+    status: str
+}
+
+struct PlayerClientOptionsEvent {
+    player: Player
+    world: str
+    locale: str
+    viewDistance: i64
+    chatColors: bool
+    mainHand: str
+    skinParts: i64
+}
+
+struct PlayerFishEvent {
+    player: Player
+    world: str
+    fishState: str
+    hookId: i64
+    caughtId: i64
+    exp: i64
+    cancelled: bool
+}
+
+struct PlayerTabCompleteEvent {
+    player: Player
+    world: str
+    buffer: str
+    completions: str
+    cancelled: bool
+}
+
+struct PlayerInteractAirEvent {
+    player: Player
+    world: str
+    item: str
+    hand: str
+    cancelled: bool
+}
+
+struct PlayerCommandSendEvent {
+    player: Player
+    world: str
+    commands: str
+}
+
+struct CommandUnknownEvent {
+    player: Player
+    world: str
+    command: str
+    message: str
+    silent: bool
+}
+
+struct PlayerStatisticEvent {
+    player: Player
+    world: str
+    statistic: str
+    previous: i64
+    value: i64
+    cancelled: bool
+}
+
+struct PlayerRecipeDiscoverEvent {
+    player: Player
+    world: str
+    recipe: str
+    cancelled: bool
+}
+
+struct PlayerRiptideEvent {
+    player: Player
+    world: str
+    item: str
+    strength: f64
+}
+
+struct PlayerVelocityEvent {
+    player: Player
+    world: str
+    vx: f64
+    vy: f64
+    vz: f64
+    cancelled: bool
+}
+
+struct PlayerLeashEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    player: Player
+    holderId: i64
+    cancelled: bool
+}
+
+struct PlayerUnleashEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    player: Player
+    cancelled: bool
+}
+
+struct PlayerTakeLecternBookEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    cancelled: bool
+}
+
+struct PlayerLecternPageEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    oldPage: i64
+    newPage: i64
+    cancelled: bool
+}
+
+struct PlayerInteractEntityAtEvent {
+    player: Player
+    world: str
+    entityId: i64
+    entityType: str
+    hand: str
+    x: f64
+    y: f64
+    z: f64
+    cancelled: bool
+}
+
+struct PlayerPickupExperienceEvent {
+    player: Player
+    world: str
+    orbId: i64
+    experience: i64
+    cancelled: bool
+}
+
+struct PlayerPickupArrowEvent {
+    player: Player
+    world: str
+    entityId: i64
+    entityType: str
+    cancelled: bool
+}
+
+struct PlayerRecipeBookClickEvent {
+    player: Player
+    world: str
+    recipe: str
+    makeAll: bool
+    cancelled: bool
+}
+
+struct PlayerSpawnChangeEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    cause: str
+    cancelled: bool
+}
+
+struct PlayerHarvestBlockEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    hand: str
+    item: str
+    count: i64
+    cancelled: bool
+}
+
+struct PlayerBucketEntityEvent {
+    player: Player
+    world: str
+    entityId: i64
+    entityType: str
+    hand: str
+    originalItem: str
+    item: str
+    cancelled: bool
+}
+
+struct PlayerItemMendEvent {
+    player: Player
+    world: str
+    slot: str
+    orbId: i64
+    repair: i64
+    consumed: i64
+    cancelled: bool
+}
+
+struct PlayerFlowerPotEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    placing: bool
+    cancelled: bool
+}
+
+struct PlayerLecternInsertEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    cancelled: bool
+}
+
+struct PlayerArmorStandManipulateEvent {
+    player: Player
+    world: str
+    entityId: i64
+    slot: str
+    hand: str
+    item: str
+    count: i64
+    standItem: str
+    standCount: i64
+    cancelled: bool
+}
+
+struct PlayerLootReplenishEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    table: str
+    canLoot: bool
+    cancelled: bool
+}
+
+struct PlayerTradeEvent {
+    player: Player
+    world: str
+    villagerId: i64
+    costA: str
+    costACount: i64
+    costB: str
+    costBCount: i64
+    result: str
+    resultCount: i64
+    uses: i64
+    maxUses: i64
+    experience: i64
+    priceMultiplier: f64
+    demand: i64
+    specialPrice: i64
+    rewardExp: bool
+    increaseUses: bool
+    cancelled: bool
+}
+
+struct PlayerEggThrowEvent {
+    player: Player
+    world: str
+    entityId: i64
+    hatching: bool
+    count: i64
+    hatchType: str
+}
+
+struct PlayerSignOpenEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    side: str
+    cause: str
+    cancelled: bool
+}
+
+struct PlayerInputEvent {
+    player: Player
+    world: str
+    forward: bool
+    backward: bool
+    left: bool
+    right: bool
+    jump: bool
+    sneak: bool
+    sprint: bool
+}
+
+struct PlayerItemCooldownEvent {
+    player: Player
+    world: str
+    item: str
+    group: str
+    ticks: i64
+    cancelled: bool
+}
+
+struct PlayerShieldDisableEvent {
+    player: Player
+    world: str
+    damagerId: i64
+    ticks: i64
+    cancelled: bool
+}
+
+struct PlayerStopUsingItemEvent {
+    player: Player
+    world: str
+    item: str
+    ticks: i64
+}
+
+struct PlayerNameEntityEvent {
+    player: Player
+    world: str
+    entityId: i64
+    entityType: str
+    name: str
+    persistent: bool
+    cancelled: bool
+}
+
+struct PlayerExhaustionEvent {
+    player: Player
+    world: str
+    reason: str
+    exhaustion: f64
+    cancelled: bool
+}
+
+struct PlayerItemFrameChangeEvent {
+    player: Player
+    world: str
+    entityId: i64
+    entityType: str
+    item: str
+    action: str
+    cancelled: bool
+}
+
+struct PlayerChangeBeaconEffectEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    primary: str
+    secondary: str
+    cancelled: bool
+}
+
+struct PlayerElytraBoostEvent {
+    player: Player
+    world: str
+    item: str
+    hand: str
+    consume: bool
+    cancelled: bool
+}
+
+struct PlayerBedTryEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    result: str
+    canSleep: str
+    useBed: str
+}
+
+struct PlayerBedFailEnterEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    reason: str
+    willExplode: bool
+    message: str
+    cancelled: bool
+}
+
+struct PlayerStonecutterSelectEvent {
+    player: Player
+    world: str
+    recipe: str
+    cancelled: bool
+}
+
+struct PlayerLoomSelectEvent {
+    player: Player
+    world: str
+    pattern: str
+    cancelled: bool
+}
+
+struct PlayerChunkLoadEvent {
+    player: Player
+    world: str
+    chunkX: i64
+    chunkZ: i64
+}
+
+struct PlayerChunkUnloadEvent {
+    player: Player
+    world: str
+    chunkX: i64
+    chunkZ: i64
+}
+
+struct PlayerAdvancementCriterionGrantEvent {
+    player: Player
+    world: str
+    advancement: str
+    criterion: str
+    cancelled: bool
+}
+
+struct EntitySpawnEvent {
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    reason: str
+    spawnerX: i64
+    spawnerY: i64
+    spawnerZ: i64
+    cancelled: bool
+}
+
+struct EntityTameEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    player: Player
+    cancelled: bool
+}
+
+struct EntityBreedEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    partnerId: i64
+    breeder: str
+    experience: i64
+    cancelled: bool
+}
+
+struct EntityMountEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    player: Player
+    mounting: bool
+    cancelled: bool
+}
+
+struct EntityHealEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    amount: f64
+    cause: str
+    fastRegen: bool
+    cancelled: bool
+}
+
+struct EntityShootEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    projectile: str
+    power: f64
+    cancelled: bool
+}
+
+struct ItemSpawnEvent {
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    entityId: i64
+    item: str
+    count: i64
+    cause: str
+    cancelled: bool
+}
+
+struct EntityDropsEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    drops: str
+    exp: i64
+    killerId: i64
+}
+
+struct EntityLaunchEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    shooterId: i64
+    cancelled: bool
+}
+
+struct VehicleDamageEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    amount: f64
+    attackerId: i64
+    cancelled: bool
+}
+
+struct VehicleDestroyEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    attackerId: i64
+    cancelled: bool
+}
+
+struct EntityResurrectEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    hand: str
+    cancelled: bool
+}
+
+struct EntityAddEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    reason: str
+}
+
+struct EntityTargetEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    targetId: i64
+    previousId: i64
+    reason: str
+    cancelled: bool
+}
+
+struct EntityGoalEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    key: str
+    phase: str
+    goalResult: bool
+}
+
+struct EntityBehaviorEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    key: str
+    phase: str
+    goalResult: bool
+}
+
+struct EntityPotionEffectEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    effect: str
+    amplifier: i64
+    duration: i64
+    action: str
+    cause: str
+    cancelled: bool
+}
+
+struct EntityCombustEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    ticks: i64
+    cause: str
+    sourceKind: str
+    sourceId: i64
+    sourceX: i64
+    sourceY: i64
+    sourceZ: i64
+    cancelled: bool
+}
+
+struct HangingPlaceEvent {
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    entityType: str
+    face: str
+    player: Player
+    cancelled: bool
+}
+
+struct HangingBreakEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    cause: str
+    removerId: i64
+    cancelled: bool
+}
+
+struct ProjectileHitEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    hitId: i64
+    x: f64
+    y: f64
+    z: f64
+    cancelled: bool
+}
+
+struct EntityPotionSplashEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    effect: str
+    affected: str
+    cancelled: bool
+}
+
+struct EntityExpBottleEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    experience: i64
+    showEffect: bool
+}
+
+struct ItemMergeEvent {
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    entityId: i64
+    item: str
+    count: i64
+    sourceId: i64
+    sourceCount: i64
+    cancelled: bool
+}
+
+struct ItemDespawnEvent {
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    entityId: i64
+    item: str
+    count: i64
+    cancelled: bool
+}
+
+struct EntityChangeBlockEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    toBlock: str
+    cause: str
+    cancelled: bool
+}
+
+struct EntityTeleportEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    toX: f64
+    toY: f64
+    toZ: f64
+    cause: str
+    cancelled: bool
+}
+
+struct EntityUnleashEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    reason: str
+    drop: bool
+}
+
+struct EntityToggleGlideEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    gliding: bool
+    cancelled: bool
+}
+
+struct EntityAirChangeEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    air: i64
+    cancelled: bool
+}
+
+struct VehicleMoveEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    fromX: f64
+    fromY: f64
+    fromZ: f64
+}
+
+struct VehicleEntityCollisionEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    otherId: i64
+    cancelled: bool
+}
+
+struct EntityOrbMergeEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    sourceId: i64
+    cancelled: bool
+}
+
+struct EntityAlliedCheckEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    otherId: i64
+    allied: bool
+}
+
+struct EntityTransformEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    toType: str
+    reason: str
+    cancelled: bool
+}
+
+struct EntitySplitEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    count: i64
+    cancelled: bool
+}
+
+struct EntityPiglinBarterEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    outcome: str
+    cancelled: bool
+}
+
+struct EntityFireworkExplodeEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    cancelled: bool
+}
+
+struct EntityToggleSwimEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    swimming: bool
+    cancelled: bool
+}
+
+struct EntityPortalEnterEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    kind: str
+}
+
+struct EntityEnterBlockEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    blockX: i64
+    blockY: i64
+    blockZ: i64
+    cancelled: bool
+}
+
+struct EntityMoveEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    fromX: f64
+    fromY: f64
+    fromZ: f64
+    x: f64
+    y: f64
+    z: f64
+    fromYaw: f64
+    fromPitch: f64
+    yaw: f64
+    pitch: f64
+    cancelled: bool
+}
+
+struct EntityPortalEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    toWorld: str
+    toX: f64
+    toY: f64
+    toZ: f64
+    cancelled: bool
+}
+
+struct EntityDropItemEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    itemId: i64
+    item: str
+    count: i64
+    cancelled: bool
+}
+
+struct EntityInteractEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    blockX: i64
+    blockY: i64
+    blockZ: i64
+    block: str
+    cancelled: bool
+}
+
+struct EntityKnockbackEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    cause: str
+    sourceId: i64
+    power: f64
+    dirX: f64
+    dirZ: f64
+    kx: f64
+    ky: f64
+    kz: f64
+    cancelled: bool
+}
+
+struct EntityBreakDoorEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    block: str
+    cancelled: bool
+}
+
+struct EntityPoseChangeEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    pose: str
+    oldPose: str
+}
+
+struct EntityVillagerAcquireTradeEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    costA: str
+    costACount: i64
+    costB: str
+    costBCount: i64
+    result: str
+    resultCount: i64
+    uses: i64
+    maxUses: i64
+    experience: i64
+    priceMultiplier: f64
+    demand: i64
+    specialPrice: i64
+    cancelled: bool
+}
+
+struct EntityVillagerReplenishTradeEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    costA: str
+    costACount: i64
+    costB: str
+    costBCount: i64
+    result: str
+    resultCount: i64
+    uses: i64
+    maxUses: i64
+    experience: i64
+    priceMultiplier: f64
+    demand: i64
+    specialPrice: i64
+    cancelled: bool
+}
+
+struct EntityEnterLoveEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    player: Player
+    ticks: i64
+    cancelled: bool
+}
+
+struct EntitySheepDyeEvent {
+    player: Player
+    world: str
+    entityId: i64
+    entityType: str
+    color: str
+    cancelled: bool
+}
+
+struct EntityEggHatchEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    hatching: bool
+    count: i64
+    hatchType: str
+}
+
+struct EntityCreeperPowerEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    boltId: i64
+    cancelled: bool
+}
+
+struct EntitySheepRegrowEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    cancelled: bool
+}
+
+struct EntityPigZapEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    boltId: i64
+    cancelled: bool
+}
+
+struct EntityRemoveEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    cause: str
+}
+
+struct EntityPlaceEvent {
+    player: Player
+    world: str
+    entityType: str
+    x: f64
+    y: f64
+    z: f64
+    blockX: i64
+    blockY: i64
+    blockZ: i64
+    face: str
+    hand: str
+    cancelled: bool
+}
+
+struct EntityJumpEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    cancelled: bool
+}
+
+struct EntityHorseJumpEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    power: f64
+    cancelled: bool
+}
+
+struct EntityPortalReadyEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    toWorld: str
+    kind: str
+    cancelled: bool
+}
+
+struct EntityPortalExitEvent {
+    entityId: i64
+    entityType: str
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    toWorld: str
+    toX: f64
+    toY: f64
+    toZ: f64
+    cancelled: bool
+}
+
+struct BlockExplodeEvent {
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    power: f64
+    cause: str
+    entityId: i64
+    cancelled: bool
+}
+
+struct BlockIgniteEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    cause: str
+    playerName: str
+    cancelled: bool
+}
+
+struct BlockGrowEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    toBlock: str
+    cause: str
+    cancelled: bool
+}
+
+struct BlockDispenseEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    face: str
+    cancelled: bool
+}
+
+struct BlockPistonEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    extending: bool
+    direction: str
+    moved: i64
+    cancelled: bool
+}
+
+struct FurnaceBurnEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    cooker: str
+    fuel: str
+    burnTime: i64
+    cancelled: bool
+}
+
+struct FurnaceStartEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    cooker: str
+    source: str
+    total: i64
+    recipe: str
+}
+
+struct BlockDamageEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    face: str
+    instaBreak: bool
+    item: str
+    cancelled: bool
+}
+
+struct BlockFadeEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    toBlock: str
+    cause: str
+    cancelled: bool
+}
+
+struct BlockBurnEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    igniterX: i64
+    igniterY: i64
+    igniterZ: i64
+    cancelled: bool
+}
+
+struct BlockFertilizeEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    cancelled: bool
+}
+
+struct BlockFromToEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    toX: i64
+    toY: i64
+    toZ: i64
+    face: str
+    cancelled: bool
+}
+
+struct BlockPhysicsEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    sourceBlock: str
+    cancelled: bool
+}
+
+struct BlockDropsEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    drops: str
+    cancelled: bool
+}
+
+struct BlockNotePlayEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    instrument: str
+    note: i64
+    cancelled: bool
+}
+
+struct BlockSpongeAbsorbEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    blocks: str
+    cancelled: bool
+}
+
+struct BlockCompostEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    raises: bool
+    cancelled: bool
+}
+
+struct BlockRedstoneEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    oldCurrent: i64
+    newCurrent: i64
+}
+
+struct BlockTntPrimeEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    reason: str
+    playerName: str
+    cancelled: bool
+}
+
+struct BlockMoistureChangeEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    moisture: i64
+    cancelled: bool
+}
+
+struct BlockBellRingEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    direction: str
+    cancelled: bool
+}
+
+struct BlockCrafterCraftEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    result: str
+    count: i64
+    cancelled: bool
+}
+
+struct BlockCanBuildEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    block: str
+    buildable: bool
+}
+
+struct BlockBrewStartEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    source: str
+    totalTime: i64
+}
+
+struct BlockBrewEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    fuel: str
+    results: str
+    cancelled: bool
+}
+
+struct BlockDispenseLootEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    lootTable: str
+    loot: str
+    cancelled: bool
+}
+
+struct BlockVaultDisplayItemEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    count: i64
+    cancelled: bool
+}
+
+struct BlockVaultChangeStateEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    player: Player
+    fromState: str
+    toState: str
+    cancelled: bool
+}
+
+struct BlockCauldronLevelEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    entityId: i64
+    reason: str
+    oldLevel: i64
+    newLevel: i64
+    newBlock: str
+    cancelled: bool
+}
+
+struct BlockBrewingFuelEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    fuelPower: i64
+    consuming: bool
+    cancelled: bool
+}
+
+struct BlockLootGenerateEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    entityId: i64
+    table: str
+    loot: str
+    cancelled: bool
+}
+
+struct BlockBellResonateEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    entities: str
+}
+
+struct BlockBellRevealRaiderEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    entityId: i64
+    entityType: str
+    cancelled: bool
+}
+
+struct BlockPreDispenseEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    slot: i64
+    cancelled: bool
+}
+
+struct BlockFailedDispenseEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    playEffect: bool
+}
+
+struct BlockShearEntityEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    entityId: i64
+    entityType: str
+    tool: str
+    cancelled: bool
+}
+
+struct BlockTargetHitEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    projectileId: i64
+    projectileType: str
+    face: str
+    signal: i64
+    cancelled: bool
+}
+
+struct BlockDispenseArmorEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    entityId: i64
+    item: str
+    cancelled: bool
+}
+
+struct WorldSaveEvent {
+    world: str
+}
+
+struct WorldChunkLoadEvent {
+    world: str
+    chunkX: i64
+    chunkZ: i64
+    generated: bool
+}
+
+struct WorldChunkUnloadEvent {
+    world: str
+    chunkX: i64
+    chunkZ: i64
+}
+
+struct WorldWeatherChangeEvent {
+    world: str
+    raining: bool
+    thundering: bool
+    fromRaining: bool
+    fromThundering: bool
+    cancelled: bool
+}
+
+struct WorldLightningEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    cancelled: bool
+}
+
+struct WorldTimeSkipEvent {
+    world: str
+    time: i64
+    fromTime: i64
+    cause: str
+    cancelled: bool
+}
+
+struct WorldGameRuleChangeEvent {
+    world: str
+    rule: str
+    value: str
+    fromValue: str
+    playerName: str
+    cancelled: bool
+}
+
+struct WorldDifficultyChangeEvent {
+    world: str
+    difficulty: str
+    fromDifficulty: str
+    playerName: str
+    cancelled: bool
+}
+
+struct ServerLoadEvent {
+    worlds: i64
+    plugins: i64
+}
+
+struct ServerStopEvent {
+    players: i64
+}
+
+struct ServerPingEvent {
+    address: str
+    motd: str
+    online: i64
+    maxPlayers: i64
+}
+
+struct ServerCommandEvent {
+    source: str
+    command: str
+    cancelled: bool
+}
+
+struct ServerRemoteCommandEvent {
+    sender: str
+    address: str
+    command: str
+    cancelled: bool
+}
+
+struct ServerBroadcastEvent {
+    message: str
+    cancelled: bool
+}
+
+struct RaidFinishEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    waves: i64
+    won: bool
+}
+
+struct WorldStructureGrowEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    species: str
+    playerName: str
+    cancelled: bool
+}
+
+struct WorldSpawnChangeEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    fromX: i64
+    fromY: i64
+    fromZ: i64
+}
+
+struct ServerTickEndEvent {
+    tick: i64
+    durationMs: f64
+    remainingMs: f64
+}
+
+struct WorldBorderBoundsEvent {
+    world: str
+    oldSize: f64
+    newSize: f64
+    durationMs: f64
+    cancelled: bool
+}
+
+struct WorldBorderCenterEvent {
+    world: str
+    oldX: f64
+    oldZ: f64
+    newX: f64
+    newZ: f64
+    cancelled: bool
+}
+
+struct WorldGameEventEvent {
+    world: str
+    x: f64
+    y: f64
+    z: f64
+    gameEvent: str
+    entityUuid: str
+    cancelled: bool
+}
+
+struct WorldPortalCreateEvent {
+    world: str
+    reason: str
+    blocks: str
+    cancelled: bool
+}
+
+struct WorldUnloadEvent {
+    world: str
+    cancelled: bool
+}
+
+struct RaidTriggerEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    cancelled: bool
+}
+
+struct RaidWaveEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    wave: i64
+    raiders: i64
+    leaderId: i64
+}
+
+struct ServerDataReloadEvent {
+    generation: i64
+}
+
+struct ServerWhitelistToggleEvent {
+    enabled: bool
+}
+
+struct InventoryOpenEvent {
+    player: Player
+    world: str
+    kind: str
+    x: i64
+    y: i64
+    z: i64
+    cancelled: bool
+}
+
+struct InventoryCloseEvent {
+    player: Player
+    world: str
+    kind: str
+    reason: str
+}
+
+struct InventoryDragEvent {
+    player: Player
+    world: str
+    dragType: str
+    slots: str
+    cancelled: bool
+}
+
+struct InventoryPrepareEvent {
+    player: Player
+    world: str
+    kind: str
+    recipe: str
+    result: str
+    name: str
+    cost: i64
+}
+
+struct InventoryTakeEvent {
+    player: Player
+    world: str
+    kind: str
+    recipe: str
+    result: str
+    shift: bool
+    cancelled: bool
+}
+
+struct InventoryEnchantPrepareEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    bookshelves: i64
+    offers: str
+    cancelled: bool
+}
+
+struct InventoryEnchantEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    button: i64
+    cost: i64
+    enchants: str
+    cancelled: bool
+}
+
+struct InventoryChangedEvent {
+    player: Player
+    world: str
+}
+
+struct InventoryClickEvent {
+    player: Player
+    world: str
+    slot: i64
+    button: i64
+    mode: str
+    item: str
+    cancelled: bool
+}
+
+struct InventorySmeltEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    cooker: str
+    item: str
+    result: str
+    source: str
+    output: str
+    recipe: str
+    cancelled: bool
+}
+
+struct InventoryMoveItemEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    kind: str
+    fromX: i64
+    fromY: i64
+    fromZ: i64
+    toX: i64
+    toY: i64
+    toZ: i64
+    item: str
+    initiator: str
+    cancelled: bool
+}
+
+struct InventoryTradeEvent {
+    player: Player
+    world: str
+    entityId: i64
+    containerId: i64
+    index: i64
+    result: str
+    cancelled: bool
+}
+
+struct InventoryFurnaceExtractEvent {
+    player: Player
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    item: str
+    amount: i64
+    experience: i64
+}
+
+struct InventoryCreativeEvent {
+    player: Player
+    world: str
+    slot: i64
+    item: str
+    count: i64
+    cancelled: bool
+}
+
+struct InventoryPickupItemEvent {
+    world: str
+    x: i64
+    y: i64
+    z: i64
+    itemId: i64
+    item: str
+    count: i64
+    cancelled: bool
+}

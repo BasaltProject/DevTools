@@ -1,11 +1,13 @@
 'use strict';
 
 const vscode = require('vscode');
+const fs = require('fs');
 const path = require('path');
-const childProcess = require('child_process');
+const { LanguageClient } = require('vscode-languageclient/node');
+const { findTool } = require('./lib/discover');
 
-const problems = vscode.languages.createDiagnosticCollection('basalt');
-const output = vscode.window.createOutputChannel('Basalt');
+let client;
+let output;
 
 function setting(name) {
   return vscode.workspace.getConfiguration('basalt').get(name);
@@ -13,93 +15,143 @@ function setting(name) {
 
 function pluginRoot() {
   const folder = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0];
-  return folder ? folder.uri : undefined;
+  return folder ? folder.uri.fsPath : undefined;
 }
 
-async function pointLuaServerAtTheApi(context) {
+function tool(name, key) {
+  const found = findTool(name, setting(key));
+  if (!found) {
+    vscode.window.showErrorMessage(`Basalt: ${name} was not found. Set basalt.${key} or put it on the PATH.`);
+  }
+  return found;
+}
+
+// Qiln and the language server both read <target>.qzi from the plugin folder.
+function syncHostApi(context) {
   const root = pluginRoot();
   if (!root) {
     return;
   }
-  const definitions = path.join(context.extensionPath, 'definitions');
-  const wanted = path.join(definitions, setting('target'));
-  const lua = vscode.workspace.getConfiguration('Lua', root);
-  const library = (lua.get('workspace.library') || []).filter((entry) => !String(entry).startsWith(definitions));
-  library.push(wanted);
-  await lua.update('workspace.library', library, vscode.ConfigurationTarget.Workspace);
-  if (!lua.inspect('runtime.version').workspaceValue) {
-    await lua.update('runtime.version', 'Lua 5.4', vscode.ConfigurationTarget.Workspace);
+  const source = path.join(context.extensionPath, 'definitions', setting('target'), 'basalt.qzi');
+  if (!fs.existsSync(source)) {
+    vscode.window.showWarningMessage(`Basalt: there is no host API for the target ${setting('target')} yet.`);
+    return;
+  }
+  const wanted = fs.readFileSync(source);
+  const target = path.join(root, `${setting('target')}.qzi`);
+  if (!fs.existsSync(target) || !fs.readFileSync(target).equals(wanted)) {
+    fs.writeFileSync(target, wanted);
   }
 }
 
-function runKiln(verb) {
-  const root = pluginRoot();
-  if (!root) {
-    return Promise.resolve();
+async function startServer() {
+  if (client || !pluginRoot()) {
+    return;
   }
-  return new Promise((resolve) => {
-    const args = [verb, root.fsPath, '--target', setting('target')];
-    childProcess.execFile(setting('kilnPath'), args, (error, stdout, stderr) => {
-      output.appendLine(`kiln ${args.join(' ')}`);
-      output.append(stdout + stderr);
-      if (error && error.code === 'ENOENT') {
-        vscode.window.showErrorMessage('Kiln was not found. Set basalt.kilnPath to its location.');
-      }
-      show(root, stderr);
-      resolve(!error);
-    });
-  });
+  const command = tool('quartz-lsp', 'quartz.lspPath');
+  if (!command) {
+    return;
+  }
+  client = new LanguageClient(
+    'basalt-quartz',
+    'Quartz Language Server',
+    { command, args: [] },
+    { documentSelector: [{ scheme: 'file', language: 'quartz' }], outputChannel: output }
+  );
+  try {
+    await client.start();
+  } catch (error) {
+    client = undefined;
+    vscode.window.showWarningMessage(`Basalt: could not start ${command} (${error.message}).`);
+  }
 }
 
-function show(root, report) {
-  problems.clear();
-  const byFile = new Map();
-  for (const line of report.split('\n')) {
-    const found = /^(.+?)(?::(\d+))?: (.+)$/.exec(line.trim());
-    if (!found) {
-      continue;
+async function stopServer() {
+  const old = client;
+  client = undefined;
+  if (old) {
+    await old.stop();
+  }
+}
+
+async function restartServer() {
+  await stopServer();
+  await startServer();
+}
+
+function runQiln(verb) {
+  const qiln = tool('qiln', 'qiln.path');
+  const root = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0];
+  if (!qiln || !root) {
+    return;
+  }
+  const execution = new vscode.ShellExecution(qiln, [verb], { cwd: root.uri.fsPath });
+  const task = new vscode.Task({ type: 'basalt', command: verb }, root, `qiln ${verb}`, 'basalt', execution, '$basalt');
+  task.group = verb === 'bundle' ? vscode.TaskGroup.Build : vscode.TaskGroup.Test;
+  return vscode.tasks.executeTask(task);
+}
+
+class QilnTaskProvider {
+  provideTasks() {
+    return [];
+  }
+
+  resolveTask(task) {
+    const verb = task.definition.command;
+    const qiln = findTool('qiln', setting('qiln.path')) || 'qiln';
+    const execution = new vscode.ShellExecution(qiln, [verb]);
+    return new vscode.Task(task.definition, task.scope || vscode.TaskScope.Workspace, `qiln ${verb}`, 'basalt', execution, '$basalt');
+  }
+}
+
+class QuartzDebugAdapterFactory {
+  createDebugAdapterDescriptor() {
+    const command = tool('quartz', 'quartz.path');
+    return command ? new vscode.DebugAdapterExecutable(command, ['debug', '--dap']) : undefined;
+  }
+}
+
+class QuartzDebugConfigurationProvider {
+  resolveDebugConfiguration(folder, config) {
+    const editor = vscode.window.activeTextEditor;
+    if (!config.type && !config.request && !config.name && editor && editor.document.languageId === 'quartz') {
+      return { type: 'quartz', request: 'launch', name: 'Run current file', program: '${file}' };
     }
-    const uri = vscode.Uri.joinPath(root, found[1]);
-    const row = Math.max(Number(found[2] || 1) - 1, 0);
-    const diagnostic = new vscode.Diagnostic(
-      new vscode.Range(row, 0, row, Number.MAX_SAFE_INTEGER),
-      found[3],
-      vscode.DiagnosticSeverity.Error
-    );
-    diagnostic.source = 'kiln';
-    byFile.set(uri.toString(), (byFile.get(uri.toString()) || []).concat(diagnostic));
-  }
-  for (const [uri, list] of byFile) {
-    problems.set(vscode.Uri.parse(uri), list);
+    return config;
   }
 }
 
 function activate(context) {
-  pointLuaServerAtTheApi(context);
+  output = vscode.window.createOutputChannel('Basalt');
+  syncHostApi(context);
   context.subscriptions.push(
-    problems,
     output,
-    vscode.commands.registerCommand('basalt.check', () => runKiln('check')),
-    vscode.commands.registerCommand('basalt.compile', async () => {
-      if (await runKiln('compile')) {
-        vscode.window.showInformationMessage('Basalt: the plugin was compiled.');
-      }
-    }),
+    vscode.commands.registerCommand('basalt.check', () => runQiln('verify')),
+    vscode.commands.registerCommand('basalt.build', () => runQiln('bundle')),
+    vscode.commands.registerCommand('basalt.restartServer', restartServer),
+    vscode.commands.registerCommand('basalt.syncHostApi', () => syncHostApi(context)),
+    vscode.tasks.registerTaskProvider('basalt', new QilnTaskProvider()),
+    vscode.debug.registerDebugAdapterDescriptorFactory('quartz', new QuartzDebugAdapterFactory()),
+    vscode.debug.registerDebugConfigurationProvider('quartz', new QuartzDebugConfigurationProvider()),
     vscode.workspace.onDidChangeConfiguration((change) => {
       if (change.affectsConfiguration('basalt.target')) {
-        pointLuaServerAtTheApi(context);
+        syncHostApi(context);
+      }
+      if (change.affectsConfiguration('basalt.quartz.lspPath')) {
+        restartServer();
       }
     }),
     vscode.workspace.onDidSaveTextDocument((document) => {
-      const name = path.basename(document.fileName);
-      if (setting('checkOnSave') && (name.endsWith('.lua') || name === 'plugin.toml')) {
-        runKiln('check');
+      if (setting('checkOnSave') && path.basename(document.fileName) === 'plugin.toml') {
+        runQiln('verify');
       }
     })
   );
-  runKiln('check');
+  return startServer();
 }
 
-function deactivate() {}
+function deactivate() {
+  return stopServer();
+}
 
 module.exports = { activate, deactivate };

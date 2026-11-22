@@ -1,43 +1,219 @@
 {
   "name": "basalt-devtools",
   "displayName": "Basalt DevTools",
-  "description": "Autocompletion, diagnostics and builds for Basalt plugins, on top of the Lua language server",
+  "description": "Quartz language support, diagnostics, debugging and builds for Basalt plugins",
   "version": "26.3.0",
   "publisher": "basaltproject",
   "license": "GPL-3.0-only",
-  "repository": { "type": "git", "url": "https://github.com/BasaltProject/DevTools.git" },
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Programming Languages", "Linters", "Snippets"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BasaltProject/DevTools.git"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Debuggers",
+    "Snippets"
+  ],
   "icon": "docs/assets/basalt-icon.png",
   "main": "./extension.js",
-  "extensionDependencies": ["sumneko.lua"],
-  "activationEvents": ["workspaceContains:plugin.toml"],
+  "scripts": {
+    "check": "node --check extension.js && node --check lib/discover.js",
+    "test": "npm run check && node --test test/discover.test.js",
+    "generate": "python3 scripts/generate-definitions.py"
+  },
+  "activationEvents": [
+    "workspaceContains:plugin.toml",
+    "onLanguage:quartz"
+  ],
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
   "contributes": {
+    "languages": [
+      {
+        "id": "quartz",
+        "aliases": [
+          "Quartz"
+        ],
+        "extensions": [
+          ".qz",
+          ".qzi"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "quartz",
+        "scopeName": "source.quartz",
+        "path": "./syntaxes/quartz.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "quartz",
+        "path": "./snippets/basalt.code-snippets"
+      }
+    ],
+    "tomlValidation": [
+      {
+        "fileMatch": "plugin.toml",
+        "url": "./schemas/plugin.schema.json"
+      }
+    ],
     "commands": [
-      { "command": "basalt.check", "title": "Basalt: Check Plugin" },
-      { "command": "basalt.compile", "title": "Basalt: Compile Plugin" }
+      {
+        "command": "basalt.check",
+        "title": "Basalt: Verify Plugin"
+      },
+      {
+        "command": "basalt.build",
+        "title": "Basalt: Bundle Plugin"
+      },
+      {
+        "command": "basalt.syncHostApi",
+        "title": "Basalt: Sync Host API"
+      },
+      {
+        "command": "basalt.restartServer",
+        "title": "Basalt: Restart Language Server"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "basalt",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": [
+              "verify",
+              "bundle"
+            ],
+            "description": "The Qiln task to run."
+          }
+        }
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "basalt",
+        "owner": "basalt",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "severity": "error",
+        "pattern": {
+          "regexp": "^(.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
     ],
     "configuration": {
       "title": "Basalt",
       "properties": {
         "basalt.target": {
           "type": "string",
-          "enum": ["server", "proxy"],
+          "enum": [
+            "server",
+            "proxy"
+          ],
           "default": "server",
-          "description": "The product the plugin is for. It picks the API the editor completes and the checks Kiln runs."
+          "description": "The product the plugin is for. It picks the host interface written to <target>.qzi (Facet packs .bspkg for the server and .bppkg for the proxy)."
         },
-        "basalt.kilnPath": {
+        "basalt.quartz.lspPath": {
           "type": "string",
-          "default": "kiln",
-          "description": "The Kiln executable."
+          "default": "",
+          "description": "The quartz-lsp executable. Empty searches the PATH and ~/.quartz/bin."
+        },
+        "basalt.quartz.path": {
+          "type": "string",
+          "default": "",
+          "description": "The quartz executable, used to debug. Empty searches the PATH and ~/.quartz/bin."
         },
         "basalt.checkOnSave": {
           "type": "boolean",
           "default": true,
-          "description": "Run Kiln when a Lua file or plugin.toml is saved and show what it finds in the Problems panel."
+          "description": "Run qiln verify when plugin.toml is saved."
+        },
+        "basalt.qiln.path": {
+          "type": "string",
+          "default": "",
+          "description": "The qiln executable, which runs the Facet tasks verify and bundle. Empty searches the PATH and ~/.quartz/bin."
         }
       }
     },
-    "snippets": [{ "language": "lua", "path": "./snippets/basalt.code-snippets" }]
+    "breakpoints": [
+      {
+        "language": "quartz"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "quartz",
+        "label": "Quartz",
+        "languages": [
+          "quartz"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "A .qz file, a package folder or a .qzb module.",
+                "default": "${file}"
+              },
+              "entry": {
+                "type": "string",
+                "description": "The function to run.",
+                "default": "main"
+              },
+              "tests": {
+                "type": "boolean",
+                "description": "Run the @test functions instead of the entry function.",
+                "default": false
+              },
+              "filter": {
+                "type": "string",
+                "description": "With tests: run only the tests whose name contains this text."
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Stop at the first line that runs.",
+                "default": false
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "quartz",
+            "request": "launch",
+            "name": "Run current file",
+            "program": "${file}"
+          },
+          {
+            "type": "quartz",
+            "request": "launch",
+            "name": "Run tests",
+            "program": "${workspaceFolder}",
+            "tests": true
+          }
+        ]
+      }
+    ]
   }
 }

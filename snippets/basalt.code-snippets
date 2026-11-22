@@ -1,12 +1,122 @@
 {
-  "Basalt event handler": {
-    "prefix": "on",
-    "body": ["on(\"${1:player.join}\", function(event)", "\t$0", "end)"],
-    "description": "Listen to an event"
+  "Plugin skeleton": {
+    "prefix": "plugin",
+    "body": [
+      "package ${1:org.example.plugin}",
+      "",
+      "import org.basaltmc.server.*",
+      "",
+      "$0"
+    ],
+    "description": "Start a plugin file"
   },
-  "Basalt command": {
-    "prefix": "cmd",
-    "body": ["cmd(\"${1:name}\", function(source, ...)", "\t$0", "end)"],
+  "Event handler": {
+    "prefix": "on",
+    "body": [
+      "@on(${1:PlayerJoin})",
+      "fn ${2:onPlayerJoin}(event: ${1:PlayerJoin}Event) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Handle a host event"
+  },
+  "Event handler with priority": {
+    "prefix": "onp",
+    "body": [
+      "@on(${1:PlayerChat}, priority = ${2:High})",
+      "fn ${3:onPlayerChat}(event: ${1:PlayerChat}Event) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Handle a host event with a priority"
+  },
+  "Command": {
+    "prefix": "command",
+    "body": [
+      "@command(\"${1:name}\", perm = \"${2:plugin.name}\")",
+      "fn ${3:name}(c: CommandCall) {",
+      "\tc.reply(\"$0\")",
+      "}"
+    ],
     "description": "Register a command"
+  },
+  "Delayed task": {
+    "prefix": "task",
+    "body": [
+      "suspend fn ${1:name}(${2:player}: Player) {",
+      "\twait ${3:40}.ticks",
+      "\t$0",
+      "}"
+    ],
+    "description": "A suspend function that waits ticks"
+  },
+  "Repeating task": {
+    "prefix": "every",
+    "body": [
+      "every ${1:20}.ticks {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Repeat a block on a period"
+  },
+  "State": {
+    "prefix": "state",
+    "body": [
+      "state ${1:Data} {",
+      "\t${2:visits}: Map<str, int>",
+      "}"
+    ],
+    "description": "Persistent plugin state"
+  },
+  "Test": {
+    "prefix": "test",
+    "body": [
+      "@test",
+      "fn ${1:works}() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "A test function"
+  },
+  "Command with Player": {
+    "prefix": "commandp",
+    "body": [
+      "@command(\"${1:name} <${2:target}>\", perm = \"${3:plugin.name}\")",
+      "fn ${4:name}(c: CommandCall, p: Player) {",
+      "\tc.reply(\"${5:done}\")$0",
+      "}"
+    ],
+    "description": "A player-only command; the invoker is the Player parameter"
+  },
+  "Cancel an event": {
+    "prefix": "oncancel",
+    "body": [
+      "@on(${1:PlayerChat}, priority = ${2:High})",
+      "fn ${3:onPlayerChat}(event: ${1:PlayerChat}Event) {",
+      "\tsetCancelled(true)$0",
+      "}"
+    ],
+    "description": "Handle an event and cancel it with the host setter"
+  },
+  "Edit an event": {
+    "prefix": "onset",
+    "body": [
+      "@on(${1:PlayerChat})",
+      "fn ${2:onPlayerChat}(event: ${1:PlayerChat}Event) {",
+      "\tset${3:Message}(${4:event.message})$0",
+      "}"
+    ],
+    "description": "Change the event being dispatched with its typed setter"
+  },
+  "Read DataRows": {
+    "prefix": "rows",
+    "body": [
+      "let ${1:rows} = ${2:worldEntities(world)}",
+      "for ${3:i} in 0..${1:rows}.count {",
+      "\tlet ${4:cell} = ${1:rows}.cell(${3:i}, 0)",
+      "\t$0",
+      "}"
+    ],
+    "description": "Walk the rows a host function hands back"
   }
 }
