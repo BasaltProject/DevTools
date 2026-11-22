@@ -46,8 +46,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check the extension script
-        run: node --check extension.js
+      - name: Lint and test the extension logic
+        run: |
+          npm ci
+          npm run lint
+          npm test
 
       - name: Package the extension
         run: |
@@ -57,7 +60,7 @@ jobs:
           open("README.md", "w").write(re.sub(r"<p align=\"center\">(?:(?!</p>).)*\.svg(?:(?!</p>).)*</p>\n*", "", text, count=1, flags=re.S))
           PY
           mkdir dist
-          npx --yes @vscode/vsce@3.6.0 package "${{ needs.plan.outputs.version }}" --no-git-tag-version --no-update-package-json \
+          npx vsce package "${{ needs.plan.outputs.version }}" --no-git-tag-version --no-update-package-json \
               --out "dist/Basalt-DevTools-VSCode-${{ needs.plan.outputs.version }}.vsix"
 
       - name: Upload the package

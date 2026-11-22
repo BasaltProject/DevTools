@@ -9,7 +9,7 @@ class SaveListener : BulkFileListener {
     override fun after(events: List<VFileEvent>) {
         if (!BasaltSettings.get().checkOnSave) return
         val saved = events.filterIsInstance<VFileContentChangeEvent>().map { it.file }
-            .filter { it.name == "plugin.toml" || it.extension == "lua" }
+            .filter { it.name == "plugin.toml" }
         if (saved.isEmpty()) return
         for (project in ProjectManager.getInstance().openProjects) {
             val base = project.basePath ?: continue

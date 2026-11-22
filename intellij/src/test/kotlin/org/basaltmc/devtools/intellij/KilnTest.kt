@@ -5,10 +5,15 @@ import java.io.File
 
 class KilnTest : BasePlatformTestCase() {
     fun testParsesWhatKilnReports() {
-        val problems = Kiln.parse("src/main.lua:12: unknown function 'nope'\nplugin.toml: missing id\nnoise")
+        val report = "plugin.toml: `abi` is 9\nbuild/plugin.wasm: import basalt.nope is not part of ABI 1\n" +
+            "kiln build: /w/demo/src/main.c:1:9: error: expected expression\n2 problem(s)"
         assertEquals(
-            listOf(Problem("src/main.lua", 12, "unknown function 'nope'"), Problem("plugin.toml", 1, "missing id")),
-            problems
+            listOf(
+                Problem("plugin.toml", 1, "`abi` is 9"),
+                Problem("build/plugin.wasm", 1, "import basalt.nope is not part of ABI 1"),
+                Problem("src/main.c", 1, "expected expression")
+            ),
+            Kiln.parse(report, File("/w/demo"))
         )
     }
 
@@ -16,7 +21,7 @@ class KilnTest : BasePlatformTestCase() {
         val root = File(project.basePath!!).also { it.mkdirs() }
         File(root, "plugin.toml").writeText("id = \"demo\"\n")
         val fakeKiln = File(root, "kiln").apply {
-            writeText("#!/bin/sh\necho 'main.lua:3: bad call' >&2\nexit 1\n")
+            writeText("#!/bin/sh\necho 'plugin.toml:3: bad value'\nexit 1\n")
             setExecutable(true)
         }
         BasaltSettings.get().kilnPath = fakeKiln.path
@@ -27,15 +32,6 @@ class KilnTest : BasePlatformTestCase() {
             com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
             Thread.sleep(50)
         }
-        assertEquals(1, model.items.size())
-        assertEquals(Problem("main.lua", 3, "bad call"), model.items[0])
-    }
-
-    fun testSyncsTheApiDefinitions() {
-        val root = File(project.basePath!!).also { it.mkdirs() }
-        File(root, "plugin.toml").writeText("id = \"demo\"\n")
-        BasaltSettings.get().target = "server"
-        ApiDefinitions.sync(project)
-        assertTrue(File(root, ".basalt/api/basalt.lua").readText().contains("---@meta"))
+        assertEquals(Problem("plugin.toml", 3, "bad value"), model.items[0])
     }
 }

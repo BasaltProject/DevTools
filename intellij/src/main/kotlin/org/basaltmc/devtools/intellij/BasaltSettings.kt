@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Storage
 class BasaltSettings : PersistentStateComponent<BasaltSettings.Values> {
     class Values {
         var target: String = "server"
-        var kilnPath: String = "kiln"
+        var kilnPath: String = ""
         var checkOnSave: Boolean = true
     }
 

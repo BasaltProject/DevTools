@@ -3,8 +3,8 @@
     <name>Basalt DevTools</name>
     <vendor url="https://basaltmc.org">Basalt Project</vendor>
     <description><![CDATA[
-        Editor support for Basalt plugins: runs Kiln to check and compile a plugin, lists what it finds in a tool
-        window, and puts the Basalt API definitions in the project so a Lua plugin completes them.
+        Editor support for Basalt WebAssembly plugins: creates, builds, checks and packs a plugin with Kiln and lists
+        what it finds in a tool window.
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -27,12 +27,14 @@
     <actions>
         <group id="Basalt.Menu" text="Basalt" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <action id="Basalt.Check" class="org.basaltmc.devtools.intellij.CheckAction" text="Check Plugin"
+            <action id="Basalt.New" class="org.basaltmc.devtools.intellij.NewPluginAction" text="New Plugin"
+                    description="Create a plugin with kiln new"/>
+            <action id="Basalt.Build" class="org.basaltmc.devtools.intellij.BuildAction" text="Build"
+                    description="Compile the plugin with Kiln"/>
+            <action id="Basalt.Check" class="org.basaltmc.devtools.intellij.CheckAction" text="Check"
                     description="Run Kiln over the plugin"/>
-            <action id="Basalt.Compile" class="org.basaltmc.devtools.intellij.CompileAction" text="Compile Plugin"
-                    description="Compile the plugin's Lua with Kiln"/>
-            <action id="Basalt.SyncApi" class="org.basaltmc.devtools.intellij.SyncApiAction" text="Sync API Definitions"
-                    description="Copy the Basalt API definitions into the project"/>
+            <action id="Basalt.Pack" class="org.basaltmc.devtools.intellij.PackAction" text="Pack"
+                    description="Pack the plugin with Kiln"/>
         </group>
     </actions>
 </idea-plugin>

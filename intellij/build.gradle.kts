@@ -44,10 +44,3 @@ intellijPlatform {
         }
     }
 }
-
-// The API definitions are the ones the VS Code extension ships; one copy of them lives in ../definitions.
-tasks.processResources {
-    from("../definitions") {
-        into("definitions")
-    }
-}

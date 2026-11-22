@@ -1,0 +1,46 @@
+{
+ "api": 1,
+ "abi": 1,
+ "capabilities": [
+  {
+   "name": "storage",
+   "form": "bool",
+   "doc": "plugin key-value store"
+  },
+  {
+   "name": "players_data",
+   "form": "bool",
+   "doc": "per-player data"
+  },
+  {
+   "name": "commands",
+   "form": "bool",
+   "doc": "running commands as the console (also needs the operator grant)"
+  },
+  {
+   "name": "files",
+   "form": "list",
+   "doc": "file access outside the plugin folder"
+  },
+  {
+   "name": "network",
+   "form": "list",
+   "doc": "plugin message channels (also needs the operator grant)"
+  },
+  {
+   "name": "packets",
+   "form": "bool",
+   "doc": "raw packets (also needs the operator grant)"
+  },
+  {
+   "name": "worldgen",
+   "form": "bool",
+   "doc": "world generation hooks and world creation"
+  },
+  {
+   "name": "datapacks",
+   "form": "bool",
+   "doc": "datapack registration"
+  }
+ ]
+}

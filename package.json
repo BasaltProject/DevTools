@@ -1,21 +1,33 @@
 {
   "name": "basalt-devtools",
   "displayName": "Basalt DevTools",
-  "description": "Autocompletion, diagnostics and builds for Basalt plugins, on top of the Lua language server",
+  "description": "Create, build, check and pack WebAssembly plugins for Basalt with Kiln",
   "version": "26.3.0",
   "publisher": "basaltproject",
   "license": "GPL-3.0-only",
   "repository": { "type": "git", "url": "https://github.com/BasaltProject/DevTools.git" },
   "engines": { "vscode": "^1.90.0" },
-  "categories": ["Programming Languages", "Linters", "Snippets"],
+  "categories": ["Programming Languages", "Linters", "Other"],
   "icon": "docs/assets/basalt-icon.png",
   "main": "./extension.js",
-  "extensionDependencies": ["sumneko.lua"],
-  "activationEvents": ["workspaceContains:plugin.toml"],
+  "activationEvents": ["workspaceContains:**/plugin.toml", "onCommand:basalt.newPlugin"],
+  "scripts": {
+    "lint": "node --check extension.js && node --check lib/kiln.js && node --check lib/manifest.js && node --check lib/toml.js && node --check scripts/generate-abi.js",
+    "test": "node test/logic.test.js",
+    "generate": "node scripts/generate-abi.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "3.6.0"
+  },
   "contributes": {
     "commands": [
-      { "command": "basalt.check", "title": "Basalt: Check Plugin" },
-      { "command": "basalt.compile", "title": "Basalt: Compile Plugin" }
+      { "command": "basalt.newPlugin", "title": "Basalt: New Plugin" },
+      { "command": "basalt.build", "title": "Basalt: Build" },
+      { "command": "basalt.check", "title": "Basalt: Check" },
+      { "command": "basalt.pack", "title": "Basalt: Pack" },
+      { "command": "basalt.installToolchain", "title": "Basalt: Install Toolchain" },
+      { "command": "basalt.searchImport", "title": "Basalt: Search ABI import" }
     ],
     "configuration": {
       "title": "Basalt",
@@ -24,20 +36,57 @@
           "type": "string",
           "enum": ["server", "proxy"],
           "default": "server",
-          "description": "The product the plugin is for. It picks the API the editor completes and the checks Kiln runs."
+          "description": "The product a new plugin is for."
         },
         "basalt.kilnPath": {
           "type": "string",
-          "default": "kiln",
-          "description": "The Kiln executable."
+          "default": "",
+          "description": "The Kiln executable. Empty looks for `kiln` on the PATH."
         },
         "basalt.checkOnSave": {
           "type": "boolean",
           "default": true,
-          "description": "Run Kiln when a Lua file or plugin.toml is saved and show what it finds in the Problems panel."
+          "description": "Run `kiln check` when a plugin.toml is saved and show what it finds in the Problems panel."
         }
       }
     },
-    "snippets": [{ "language": "lua", "path": "./snippets/basalt.code-snippets" }]
+    "taskDefinitions": [
+      {
+        "type": "kiln",
+        "required": ["command"],
+        "properties": {
+          "command": { "type": "string", "enum": ["build", "check", "pack"], "description": "The Kiln command." },
+          "folder": { "type": "string", "description": "The plugin folder, the one with plugin.toml." }
+        }
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "kiln",
+        "owner": "kiln",
+        "source": "kiln",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(?:kiln \\w+: )?([^\\s:][^:]*[./][^:\\s]*?)(?::(\\d+))?: (?!error: |warning: )(.+)$",
+          "file": 1,
+          "line": 2,
+          "message": 3
+        }
+      },
+      {
+        "name": "kiln-compiler",
+        "owner": "kiln-compiler",
+        "source": "kiln",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^(?:kiln \\w+: )?(.+?):(\\d+):(?:(\\d+):)? (error|warning|fatal error): (.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    ]
   }
 }

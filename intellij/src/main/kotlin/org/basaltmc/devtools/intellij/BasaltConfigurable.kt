@@ -12,16 +12,16 @@ class BasaltConfigurable : BoundConfigurable("Basalt") {
     override fun createPanel(): DialogPanel {
         val values = BasaltSettings.get()
         return panel {
-            row("Target:") {
+            row("Target for new plugins:") {
                 comboBox(listOf("server", "proxy"))
                     .bindItem(MutableProperty({ values.target }, { values.target = it ?: "server" }))
-                    .comment("The product the plugin is for. It picks the API the editor completes and the checks Kiln runs.")
+                    .comment("The product a new plugin is for.")
             }
             row("Kiln executable:") {
-                textField().bindText(values::kilnPath)
+                textField().bindText(values::kilnPath).comment("Empty looks for kiln on the PATH.")
             }
             row {
-                checkBox("Run Kiln when a Lua file or plugin.toml is saved").bindSelected(values::checkOnSave)
+                checkBox("Run Kiln check when plugin.toml is saved").bindSelected(values::checkOnSave)
             }
         }
     }

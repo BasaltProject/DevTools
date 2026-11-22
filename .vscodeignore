@@ -1,5 +1,8 @@
 .git/**
-scripts/**
-.gitignore
-intellij/**
 .github/**
+.gitignore
+scripts/**
+test/**
+intellij/**
+node_modules/**
+package-lock.json
