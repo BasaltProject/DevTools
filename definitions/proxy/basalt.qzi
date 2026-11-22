@@ -1,0 +1,181 @@
+package org.basaltmc.proxy
+
+fn print(text: str)
+fn logInfo(text: str)
+fn logWarn(text: str)
+fn logError(text: str)
+fn pluginId() -> str
+fn pluginName() -> str
+fn pluginVersion() -> str
+
+@handle
+@awaitable
+struct Delay {}
+
+impl int {
+    @property
+    fn ticks(self) -> Delay
+    @property
+    fn seconds(self) -> Delay
+    @property
+    fn minutes(self) -> Delay
+}
+
+fn setCancelled(value: bool)
+fn setDenyReason(text: str)
+fn setMessage(text: str)
+fn setServer(name: str)
+fn setPlayers(online: int, max: int)
+fn setVersion(name: str, protocol: int)
+
+@handle
+struct Player {
+    name: str,
+    uuid: str,
+    server: str,
+    address: str,
+    port: int,
+    ping: int,
+    locale: str,
+    viewDistance: int
+}
+
+impl Player {
+    fn send(self, message: str)
+    fn actionBar(self, message: str)
+    fn title(self, title: str, subtitle: str)
+    fn setTabList(self, header: str, footer: str)
+    fn kick(self, reason: str)
+    fn connect(self, server: str) -> bool
+    fn transfer(self, host: str, port: int) -> bool
+    fn say(self, text: str) -> bool
+    fn hasPermission(self, node: str) -> bool
+    fn group(self) -> str
+    fn setGroup(self, group: str) -> bool
+    fn setPermission(self, node: str, value: int)
+    fn sendPluginMessage(self, channel: str, data: str, toBackend: bool) -> bool
+}
+
+fn playerCount() -> int
+fn playersOn(server: str) -> int
+fn playerNamed(name: str) -> Player?
+fn playerByUuid(uuid: str) -> Player?
+fn isOnline(p: Player) -> bool
+fn broadcast(message: str)
+fn runConsole(command: str) -> bool
+fn registerChannel(name: str)
+
+fn serverCount() -> int
+fn serverNameAt(index: int) -> str
+fn serverExists(name: str) -> bool
+fn serverAddress(name: str) -> str
+fn registerServer(name: str, host: str, port: int, like: str) -> str
+fn unregisterServer(name: str) -> bool
+fn proxyPort() -> int
+fn onlineMode() -> bool
+
+@handle
+struct CommandCall {
+    sender: str,
+    kind: str,
+    isConsole: bool
+}
+
+impl CommandCall {
+    fn reply(self, message: str)
+    fn text(self, name: str) -> str
+    fn integer(self, name: str) -> int
+    fn decimal(self, name: str) -> float
+    fn flag(self, name: str) -> bool
+    fn player(self) -> Player?
+}
+
+fn configStr(key: str, fallback: str) -> str
+fn configInt(key: str, fallback: int) -> int
+fn configFloat(key: str, fallback: float) -> float
+fn configBool(key: str, fallback: bool) -> bool
+fn fileExists(path: str) -> bool
+fn fileRead(path: str) -> str
+fn fileWrite(path: str, text: str) -> bool
+
+
+struct PlayerLoginEvent {
+    name: str
+    uuid: str
+    address: str
+    host: str
+    cancelled: bool
+}
+
+struct ServerPreConnectEvent {
+    name: str
+    uuid: str
+    address: str
+    server: str
+    fromServer: str
+    cancelled: bool
+}
+
+struct PlayerKickedEvent {
+    player: Player
+    server: str
+    reason: str
+}
+
+struct PlayerChatEvent {
+    player: Player
+    server: str
+    message: str
+    signed: bool
+    cancelled: bool
+}
+
+struct PlayerCommandEvent {
+    player: Player
+    server: str
+    command: str
+    signed: bool
+    cancelled: bool
+}
+
+struct ProxyPingEvent {
+    host: str
+    protocol: i64
+    address: str
+}
+
+struct PlayerJoinEvent {
+    player: Player
+    server: str
+    address: str
+}
+
+struct PlayerQuitEvent {
+    player: Player
+    server: str
+}
+
+struct ServerSwitchEvent {
+    player: Player
+    server: str
+    fromServer: str
+}
+
+struct PlayerLatencyEvent {
+    player: Player
+    ping: i64
+}
+
+struct PlayerSettingsEvent {
+    player: Player
+    locale: str
+    viewDistance: i64
+}
+
+struct PluginMessageEvent {
+    player: Player
+    channel: str
+    data: str
+    fromBackend: bool
+    cancelled: bool
+}

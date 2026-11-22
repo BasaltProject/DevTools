@@ -1,218 +1,54 @@
 #!/usr/bin/env python3
-"""Writes definitions/<target>/basalt.lua, the LuaLS annotations for a target, from Kiln's api/<target>.api."""
-import re
+"""Refreshes definitions/<target>/basalt.qzi from the interface the product writes at startup.
+
+usage: generate-definitions.py <target> <product binary | host interface file> [out.qzi]
+
+A binary is started with a scratch plugins folder, and the interface it writes there is copied once it is complete.
+"""
+import os
+import pathlib
+import shutil
+import subprocess
 import sys
-from pathlib import Path
+import tempfile
+import time
 
-STDLIB = {"assert", "coroutine", "error", "getmetatable", "ipairs", "load", "math", "next", "os", "pairs", "pcall",
-          "print", "rawequal", "rawget", "rawlen", "rawset", "require", "select", "setmetatable", "string", "table",
-          "tonumber", "tostring", "type", "utf8", "xpcall", "_VERSION"}
-
-SIGNATURES = {
-    "log.info": ("message: string", None),
-    "log.warn": ("message: string", None),
-    "log.error": ("message: string", None),
-}
+TARGETS = {"server": ("host.qzi", "org.basaltmc.server"), "proxy": ("proxy.qzi", "org.basaltmc.proxy")}
 
 
-STORE = [
-    "---A plugin-wide table: `store.key` reads a boolean, number or string, `store.key = value` writes it and `nil` deletes. Needs `storage`.",
-    "---@class basalt.store",
-    "---@field [string] boolean|number|string|nil",
-    "---@field top fun(key: string, limit?: integer): basalt.StoreEntry[] The highest values of a key across the server store and every player, highest first; `limit` defaults to 10.",
-    "store = {}",
-    "",
-    "---@class basalt.StoreEntry",
-    "---@field uuid string The holder: `server` for the store, or a player's uuid.",
-    "---@field name string The holder's name when known, otherwise the same as `uuid`.",
-    "---@field value boolean|number|string",
-    "",
-]
+def from_product(binary: str, name: str) -> str:
+    with tempfile.TemporaryDirectory(prefix="basalt-devtools-") as work:
+        plugins = pathlib.Path(work, "plugins")
+        plugins.mkdir()
+        env = dict(os.environ, BASALT_QUARTZ_DIR=str(plugins))
+        args = [os.path.abspath(binary)] + (["--accept-eula"] if "Server" in os.path.basename(binary) else
+                                            ["--config", str(pathlib.Path(work, "config"))])
+        process = subprocess.Popen(args, cwd=work, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            deadline = time.time() + 180
+            while time.time() < deadline and not (plugins / name).exists():
+                time.sleep(0.5)
+            time.sleep(1)
+            return (plugins / name).read_text(encoding="utf-8")
+        finally:
+            process.terminate()
+            process.wait(timeout=30)
 
 
-def read(api: Path):
-    rows = {}
-    for line in api.read_text().splitlines():
-        if not line or line.startswith("#") or line.startswith("@"):
-            continue
-        path, kind = line.split(" ", 1)
-        rows[path] = kind
-    return rows
+def main() -> int:
+    if len(sys.argv) not in (3, 4) or sys.argv[1] not in TARGETS:
+        print(__doc__, file=sys.stderr)
+        return 2
+    target, source = sys.argv[1], sys.argv[2]
+    name, package = TARGETS[target]
+    text = pathlib.Path(source).read_text(encoding="utf-8") if source.endswith(".qzi") else from_product(source, name)
+    if not text.startswith(f"package {package}\n"):
+        print(f"the interface does not start with `package {package}`", file=sys.stderr)
+        return 1
+    out = pathlib.Path(sys.argv[3] if len(sys.argv) == 4 else f"definitions/{target}/basalt.qzi")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8")
+    return 0
 
 
-EVENT_STRING = {"id", "payload", "world", "from_world", "to_world", "message", "command", "cause", "action", "block", "to_block", "item",
-                "main_item", "off_item", "hand", "entity_type", "gamemode", "from_gamemode", "kind", "direction",
-                "rule", "address", "motd", "source", "projectile", "reason", "effect", "cooker", "result",
-                "difficulty", "from_difficulty", "line1", "line2", "line3", "line4", "title", "pages", "source_id",
-                "old_item", "new_item", "advancement", "pack_id", "status", "locale", "main_hand", "buffer",
-                "completions", "source_kind", "format", "recipients", "initiator", "state", "species", "face", "source_block", "drops", "instrument", "blocks", "fuel", "results",
-                "affected", "event", "key", "phase", "recipe", "statistic", "commands", "to_type", "outcome", "decoration", "breeder", "original_item"}
-EVENT_NUMBER = {"x", "y", "z", "from_x", "from_y", "from_z", "power", "amount", "time", "from_time", "duration",
-                "damage", "health", "igniter_x", "igniter_y", "igniter_z", "to_x", "to_y", "to_z", "duration_ms",
-                "remaining_ms", "strength", "vx", "vy", "vz", "from_yaw", "from_pitch", "yaw", "pitch", "old_size", "new_size", "old_x", "old_z", "new_x", "new_z", "dir_x", "dir_z", "kx", "ky", "kz"}
-EVENT_INTEGER = {"entity_id", "partner_id", "slot", "from_slot", "count", "food", "from_food", "level",
-                 "from_level", "chunk_x", "chunk_z", "index", "button", "waves", "online", "max_players",
-                 "players", "worlds", "plugins", "tick", "ticks", "amplifier", "skin_parts", "view_distance", "hook_id",
-                 "caught_id", "exp", "remover_id", "hit_id", "note", "old_current", "new_current", "moisture", "total_time",
-                 "experience", "source_count", "holder_id", "previous", "value", "orb_id", "old_page", "new_page",
-                 "other_id", "block_x", "block_y", "block_z", "wave", "raiders", "leader_id", "container_id", "source_x", "source_y", "source_z", "item_id", "attacker_id", "direct_id", "killer_id", "shooter_id", "target_id", "previous_id", "cost", "burn_time", "total", "generation", "bookshelves"}
-EVENT_BOOLEAN = {"sneaking", "sprinting", "raining", "thundering", "from_raining", "from_thundering", "filling",
-                 "extending", "mounting", "entering", "generated", "broken", "won", "flying", "signing", "chat_colors", "silent", "drop_items", "raises", "buildable", "show_effect", "gliding", "swimming", "drop", "make_all", "insta_break", "fast_regen", "keep_inventory", "keep_level", "show_messages"}
-
-
-EVENT_OVERRIDE = {("entity.knockback", "source_id"): "integer", ("entity.combust", "source_id"): "integer", ("player.armor_change", "slot"): "string", ("entity.goal", "result"): "boolean", ("entity.behavior", "result"): "boolean", ("entity.allied_check", "allied"): "boolean"}
-
-
-def event_type(field, event=None):
-    if (event, field) in EVENT_OVERRIDE:
-        return EVENT_OVERRIDE[(event, field)]
-    if field.endswith(("_name", "_uuid")) or field in EVENT_STRING:
-        return "string"
-    if field in EVENT_NUMBER:
-        return "number"
-    if field in EVENT_INTEGER:
-        return "integer"
-    if field in EVENT_BOOLEAN:
-        return "boolean"
-    return "any"
-
-
-def read_events(source: Path):
-    text = source.read_text()
-    events = []
-    for m in re.finditer(r'HOOK_EVENT\(\w+,\s*"([^"]+)",\s*(true|false),\s*FIELDS\(([^)]*)\),\s*MUTABLE\(([^)]*)\)', text):
-        events.append((m.group(1), m.group(2) == "true", re.findall(r'"(\w+)"', m.group(3)),
-                       re.findall(r'"(\w+)"', m.group(4))))
-    for m in re.finditer(r'PluginEventType type\{\s*"([^"]+)",\s*(true|false),\s*\{([^}]*)\}(?:,\s*\{([^}]*)\})?', text):
-        events.append((m.group(1), m.group(2) == "true", re.findall(r'"(\w+)"', m.group(3)),
-                       re.findall(r'"(\w+)"', m.group(4) or "")))
-    return events
-
-
-def render_events(events):
-    out = []
-    for name, cancellable, fields, mutable in events:
-        cls = "basalt.event." + name.replace(".", "_")
-        out.append(f"---@class {cls}")
-        out.append("---@field name string")
-        out.append("---@field cancelled boolean")
-        if "player_name" in fields:
-            out.append("---@field player basalt.Player?")
-        if "entity_id" in fields:
-            out.append("---@field entity basalt.Entity?")
-        if "x" in fields:
-            out.append("---@field pos basalt.Position")
-        for field in fields:
-            note = " (the handler may change it)" if field in mutable else ""
-            out.append(f"---@field {field} {event_type(field, name)}{note}")
-        out.append("local _ = {}")
-        if cancellable:
-            out.append("")
-            out.append(f"---@param message? string")
-            out.append(f"function _:cancel(message) end")
-        out.append("")
-    return out
-
-
-def render_listeners(events):
-    out = []
-    for verb in ("on", "watch"):
-        for name, cancellable, fields, mutable in events:
-            cls = "basalt.event." + name.replace(".", "_")
-            out.append(f'---@overload fun(event: "{name}", handler: fun(e: {cls}))')
-            out.append(f'---@overload fun(event: "{name}", filter: table, handler: fun(e: {cls}))')
-        out.append("---@overload fun(event: string, handler: fun(e: table))")
-        out.append("---@param event string")
-        out.append("---@param handler fun(e: table)")
-        out.append(f"function {verb}(event, handler) end")
-        out.append("")
-    return out
-
-
-def typed_names(types: Path):
-    defined = set()
-    roots = set()
-    for line in types.read_text().splitlines():
-        m = re.match(r"function ([\w.]+)\(", line)
-        if m:
-            defined.add(m.group(1))
-        m = re.match(r"^(\w+) = ", line)
-        if m:
-            roots.add(m.group(1))
-    return defined, roots
-
-
-def render(rows, types=None, events=None):
-    out = ["---@meta", "-- Generated by scripts/generate-definitions.py from Kiln's API manifest. Do not edit.", ""]
-    defined, roots = (set(), set())
-    if types is not None:
-        defined, roots = typed_names(types)
-        body = [l for l in types.read_text().splitlines() if l != "---@meta" and not l.startswith("-- Hand-written")]
-        out += body + [""]
-    if events:
-        out += render_events(events)
-        out += render_listeners(events)
-        defined |= {"on", "watch"}
-    tables = sorted(p for p, k in rows.items() if k == "table" and p.split(".")[0] not in STDLIB)
-    for path in tables:
-        if path == "store" and path not in roots:
-            out += STORE
-        elif "." not in path and path not in roots:
-            if any(other.startswith(path + ".") for other in rows):
-                out.append(f"---@class basalt.{path}")
-            else:
-                out.append("---@type table<string, any>")
-            out.append(f"{path} = {{}}")
-            out.append("")
-    for path in sorted(rows):
-        root = path.split(".")[0]
-        if root in STDLIB or rows[path] != "function" or path in defined:
-            continue
-        params, _ = SIGNATURES.get(path, ("...", None))
-        name = path
-        if params == "...":
-            out.append(f"---@param ... any")
-            out.append(f"---@return any")
-        else:
-            for param in params.split(", "):
-                pname, ptype = param.split(": ")
-                out.append(f"---@param {pname} {ptype}")
-        names = params if params == "..." else ", ".join(param.split(": ")[0] for param in params.split(", "))
-        out.append(f"function {name}({names}) end")
-        out.append("")
-    for path in sorted(rows):
-        root = path.split(".")[0]
-        if root in STDLIB or rows[path] in ("table", "function") or "." not in path or root in roots:
-            continue
-        out.append(f"---@type {'number' if path.endswith(('lane', 'lanes')) else 'string'}")
-        out.append(f"{path} = nil")
-        out.append("")
-    return "\n".join(out).rstrip() + "\n"
-
-
-def main():
-    args = sys.argv[1:]
-    events_sources = []
-    types_file = None
-    while "--events" in args:
-        i = args.index("--events")
-        events_sources.append(Path(args[i + 1]))
-        del args[i : i + 2]
-    if "--types" in args:
-        i = args.index("--types")
-        types_file = Path(args[i + 1])
-        del args[i : i + 2]
-    if len(args) != 2:
-        sys.exit("usage: generate-definitions.py <api-file> <target> [--types <file>] [--events <PluginEventTypes.cpp|PluginHookEvents.def>]...")
-    rows = read(Path(args[0]))
-    target = args[1]
-    root = Path(__file__).resolve().parent.parent
-    if types_file is None and (root / "types" / f"{target}.lua").exists():
-        types_file = root / "types" / f"{target}.lua"
-    destination = root / "definitions" / target / "basalt.lua"
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    events = [e for source in events_sources for e in read_events(source)] or None
-    destination.write_text(render(rows, types_file, events))
-
-
-main()
+sys.exit(main())

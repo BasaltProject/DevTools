@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Basalt plugin manifest",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]{1,64}$",
+      "description": "1 to 64 lower case letters, digits, '_' or '-'."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Display name."
+    },
+    "version": {
+      "type": "string",
+      "description": "Must equal the project's version in build.qz."
+    },
+    "api": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Version of the plugin API the product offers."
+    },
+    "authors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "At least one author."
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
