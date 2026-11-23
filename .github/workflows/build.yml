@@ -69,7 +69,7 @@ jobs:
           name: devtools-vscode
           path: dist/
 
-  intellij:
+  jetbrains:
     needs: plan
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -84,24 +84,24 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build the plugin
-        working-directory: intellij
-        run: ./gradlew buildPlugin -PpluginVersion=${{ needs.plan.outputs.version }}
+        working-directory: jetbrains
+        run: ./gradlew test buildPlugin verifyPlugin -PpluginVersion=${{ needs.plan.outputs.version }}
 
       - name: Name the package
         run: |
           mkdir dist
-          cp intellij/build/distributions/basalt-devtools-intellij-${{ needs.plan.outputs.version }}.zip \
-              "dist/Basalt-DevTools-IntelliJ-${{ needs.plan.outputs.version }}.zip"
+          cp jetbrains/build/distributions/basalt-devtools-jetbrains-${{ needs.plan.outputs.version }}.zip \
+              "dist/Basalt-DevTools-JetBrains-${{ needs.plan.outputs.version }}.zip"
 
       - name: Upload the package
         uses: actions/upload-artifact@v4
         with:
-          name: devtools-intellij
+          name: devtools-jetbrains
           path: dist/
 
   release:
     if: ${{ github.event_name == 'push' }}
-    needs: [plan, vscode, intellij]
+    needs: [plan, vscode, jetbrains]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:

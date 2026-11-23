@@ -1,3 +1,4 @@
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
@@ -8,7 +9,6 @@ plugins {
 group = "org.basaltmc"
 version = providers.gradleProperty("pluginVersion").getOrElse("26.3.0")
 
-// The IDE runs on Java 21, so what is built for it targets 21 whichever JDK builds it.
 kotlin {
     jvmToolchain(25)
 }
@@ -37,6 +37,14 @@ dependencies {
 }
 
 intellijPlatform {
+    pluginVerification {
+        ides {
+            current()
+            create(IntelliJPlatformType.CLion, "2025.3")
+            create(IntelliJPlatformType.RustRover, "2025.3")
+            create(IntelliJPlatformType.WebStorm, "2025.3")
+        }
+    }
     pluginConfiguration {
         name = "Basalt DevTools"
         ideaVersion {

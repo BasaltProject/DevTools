@@ -3,7 +3,7 @@
     <name>Basalt DevTools</name>
     <vendor url="https://basaltmc.org">Basalt Project</vendor>
     <description><![CDATA[
-        Editor support for Basalt WebAssembly plugins: creates, builds, checks and packs a plugin with Kiln and lists
+        JetBrains IDE support for Basalt WebAssembly plugins: creates, builds, checks and packs a plugin with Kiln and lists
         what it finds in a tool window.
     ]]></description>
 

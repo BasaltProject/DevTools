@@ -27,18 +27,38 @@ AssemblyScript, Go, Kotlin, Java or C#. It drives [Kiln](https://github.com/Basa
 verifies the plugin.
 
 - **Commands:** `Basalt: New Plugin`, `Build`, `Check`, `Pack`, `Install Toolchain` and `Search ABI import`.
-- **Tasks:** `kiln` tasks for every folder with a `plugin.toml`, with problem matchers for Kiln and compiler errors.
-- **plugin.toml:** validation, completion and hover for the fields and the capability names.
+- **Tasks (VS Code):** `kiln` tasks for every folder with a `plugin.toml`, with problem matchers for Kiln and compiler errors.
+- **plugin.toml (VS Code):** validation, completion and hover for the fields and the capability names.
 - **Server and proxy:** pick the target when creating a plugin; Kiln reads it from `plugin.toml` afterwards.
 
-VS Code is the main editor. A JetBrains plugin (IntelliJ IDEA 2025.3+) lives in [`intellij/`](intellij/).
+DevTools is optional: every build command is also available through Kiln in the terminal. Code completion,
+including the Basalt API, comes from the editor's support for your chosen language and the Basalt SDK, with the
+project configured for that language. DevTools adds completion for `plugin.toml` in VS Code.
+
+Extensions are available for VS Code and JetBrains IDEs based on IntelliJ Platform 2025.3+ (build 253+), including
+IntelliJ IDEA, CLion, RustRover, GoLand, WebStorm, Rider, PyCharm and PhpStorm. The JetBrains plugin lives in
+[`jetbrains/`](jetbrains/) and uses the shared platform API.
 
 ## Installing
 
-Needs VS Code 1.90+ and [Kiln](https://github.com/BasaltProject/Kiln/releases) on the `PATH` (or set `basalt.kilnPath`).
+Both extensions need [Kiln](https://github.com/BasaltProject/Kiln/releases) on the `PATH` or an explicit path in their
+settings. Install the language support and configure the SDK separately for code completion.
+
+### VS Code
+
+Needs VS Code 1.90+. Set `basalt.kilnPath` if Kiln is not on the `PATH`.
 Download `Basalt-DevTools-VSCode-<version>.vsix` from the
 [releases page](https://github.com/BasaltProject/DevTools/releases) and install it with
 `Extensions: Install from VSIX`. The extension turns on when the open folder contains a `plugin.toml`.
+
+### JetBrains IDEs
+
+Download `Basalt-DevTools-JetBrains-<version>.zip` from the
+[releases page](https://github.com/BasaltProject/DevTools/releases). In your IDE, open **Settings > Plugins**, use the
+gear menu and choose **Install Plugin from Disk**. Select the ZIP without extracting it.
+
+Open the plugin project folder containing `plugin.toml`. Use **Tools > Basalt** to create, build, check or pack a
+plugin. Configure the Kiln executable under **Settings > Tools > Basalt**; findings appear in the **Basalt** tool window.
 
 ## License
 
